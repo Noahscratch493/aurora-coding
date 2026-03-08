@@ -21,9 +21,19 @@ function drawSprite(ctx: CanvasRenderingContext2D, sprite: SpriteState) {
 
   ctx.save();
   ctx.translate(cx, cy);
-  ctx.rotate(((sprite.direction - 90) * Math.PI) / 180);
+
+  // Apply rotation based on rotation style
+  let flipScaleX = sprite.flipX ? -1 : 1;
+  if (sprite.rotationStyle === 'all-around') {
+    ctx.rotate(((sprite.direction - 90) * Math.PI) / 180);
+  } else if (sprite.rotationStyle === 'left-right') {
+    // Only flip horizontally when facing left
+    if (sprite.direction > 180) flipScaleX *= -1;
+  }
+  // 'dont-rotate' = no rotation at all
+
   ctx.scale(
-    scale * (sprite.flipX ? -1 : 1),
+    scale * flipScaleX,
     scale * (sprite.flipY ? -1 : 1)
   );
 
