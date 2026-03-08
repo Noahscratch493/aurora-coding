@@ -1244,11 +1244,6 @@ export function buildToolbox() {
         { kind: 'label', text: '📡 Fetch' },
         { kind: 'block', type: 'fetch_url', inputs: { URL: { shadow: { type: 'text', fields: { TEXT: 'https://api.example.com/data' }}}}},
         { kind: 'block', type: 'fetch_json_field' },
-        { kind: 'sep', gap: 12 },
-        { kind: 'label', text: '🤖 AI Chat' },
-        { kind: 'block', type: 'ai_set_personality', inputs: { PERSONALITY: { shadow: { type: 'text', fields: { TEXT: 'You are a friendly pirate' }}}}},
-        { kind: 'block', type: 'ai_ask', inputs: { PROMPT: { shadow: { type: 'text', fields: { TEXT: 'Tell me a joke' }}}}},
-        { kind: 'block', type: 'ai_say', inputs: { PROMPT: { shadow: { type: 'text', fields: { TEXT: 'Tell me a fun fact' }}}}},
       ],
     },
   ];
