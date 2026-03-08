@@ -706,6 +706,15 @@ Blockly.Blocks['ai_say'] = {
   },
 };
 
+Blockly.Blocks['ai_set_personality'] = {
+  init(this: Blockly.Block) {
+    this.appendValueInput('PERSONALITY').setCheck('String').appendField('set AI personality to');
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setColour(350);
+  },
+};
+
 // ---- CODE GENERATORS ----
 
 if (!javascriptGenerator.forBlock['math_number']) {
@@ -1232,6 +1241,7 @@ export function buildToolbox() {
         { kind: 'block', type: 'fetch_json_field' },
         { kind: 'sep', gap: 12 },
         { kind: 'label', text: '🤖 AI Chat' },
+        { kind: 'block', type: 'ai_set_personality', inputs: { PERSONALITY: { shadow: { type: 'text', fields: { TEXT: 'You are a friendly pirate' }}}}},
         { kind: 'block', type: 'ai_ask', inputs: { PROMPT: { shadow: { type: 'text', fields: { TEXT: 'Tell me a joke' }}}}},
         { kind: 'block', type: 'ai_say', inputs: { PROMPT: { shadow: { type: 'text', fields: { TEXT: 'Tell me a fun fact' }}}}},
       ],
