@@ -417,6 +417,7 @@ export class AuroraRuntime {
           draggable: s.draggable || false,
           flipX: s.flipX || false,
           flipY: s.flipY || false,
+          rotationStyle: s.rotationStyle || 'all-around',
         }));
       }
       if (parsed.stageBackground) this.stageBackground = parsed.stageBackground;
