@@ -6,6 +6,7 @@ import * as Blockly from 'blockly';
 import { javascriptGenerator } from 'blockly/javascript';
 import StageCanvas from '@/components/aurora/StageCanvas';
 import { AuroraRuntime, SpriteState } from '@/lib/aurora-runtime';
+import { supabase } from '@/integrations/supabase/client';
 import '@/lib/aurora-blocks';
 
 interface SharedProject {
@@ -18,16 +19,10 @@ interface SharedProject {
   remixOf?: { id: string; name: string; };
 }
 
-function getProject(id: string): SharedProject | null {
-  try {
-    const projects: SharedProject[] = JSON.parse(localStorage.getItem('aurora_shared_projects') || '[]');
-    return projects.find(p => p.id === id) || null;
-  } catch { return null; }
-}
-
 export default function ProjectPage() {
   const { id } = useParams<{ id: string }>();
   const [project, setProject] = useState<SharedProject | null>(null);
+  const [loading, setLoading] = useState(true);
   const [renderKey, setRenderKey] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const runtimeRef = useRef<AuroraRuntime | null>(null);
@@ -38,17 +33,22 @@ export default function ProjectPage() {
   const runtime = runtimeRef.current;
 
   useEffect(() => {
-    if (id) {
-      const p = getProject(id);
-      setProject(p);
-      if (p?.data) {
+    if (!id) return;
+    supabase.from('shared_projects').select('*').eq('id', id).single().then(({ data }) => {
+      if (data) {
+        const p: SharedProject = {
+          id: data.id, name: data.name, author: data.author, thumbnail: data.thumbnail,
+          data: data.data, createdAt: new Date(data.created_at).getTime(),
+          remixOf: data.remix_of_id ? { id: data.remix_of_id, name: data.remix_of_name || '' } : undefined,
+        };
+        setProject(p);
         runtime.loadAurFile(p.data);
         setRenderKey(n => n + 1);
       }
-    }
+      setLoading(false);
+    });
   }, [id, runtime]);
 
-  // Wire up keyboard events so projects can accept input
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => runtime.handleKeyDown(e.key);
     const onKeyUp = (e: KeyboardEvent) => runtime.handleKeyUp(e.key);
@@ -97,6 +97,14 @@ export default function ProjectPage() {
   const handleMouseUp = useCallback(() => {
     runtime.handleMouseUp();
   }, [runtime]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground text-sm">Loading project...</p>
+      </div>
+    );
+  }
 
   if (!project) {
     return (

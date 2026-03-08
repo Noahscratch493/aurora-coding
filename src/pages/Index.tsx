@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import * as Blockly from 'blockly';
 import { javascriptGenerator } from 'blockly/javascript';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -37,15 +38,23 @@ interface SharedProject {
   id: string; name: string; author: string; thumbnail: string; data: string; createdAt: number;
   remixOf?: { id: string; name: string; };
 }
-function getSharedProjects(): SharedProject[] {
-  try { return JSON.parse(localStorage.getItem('aurora_shared_projects') || '[]'); } catch { return []; }
+
+async function fetchSharedProject(id: string): Promise<SharedProject | null> {
+  const { data } = await supabase.from('shared_projects').select('*').eq('id', id).single();
+  if (!data) return null;
+  return {
+    id: data.id, name: data.name, author: data.author, thumbnail: data.thumbnail,
+    data: data.data, createdAt: new Date(data.created_at).getTime(),
+    remixOf: data.remix_of_id ? { id: data.remix_of_id, name: data.remix_of_name || '' } : undefined,
+  };
 }
-function saveSharedProject(project: SharedProject) {
-  const projects = getSharedProjects();
-  const idx = projects.findIndex(p => p.id === project.id);
-  if (idx >= 0) projects[idx] = project;
-  else projects.push(project);
-  localStorage.setItem('aurora_shared_projects', JSON.stringify(projects));
+
+async function saveSharedProject(project: SharedProject) {
+  await supabase.from('shared_projects').upsert({
+    id: project.id, name: project.name, author: project.author,
+    thumbnail: project.thumbnail, data: project.data,
+    remix_of_id: project.remixOf?.id || null, remix_of_name: project.remixOf?.name || null,
+  });
 }
 
 
@@ -83,34 +92,29 @@ export default function Index() {
     const loadId = searchParams.get('load');
     const remixId = searchParams.get('remix');
     const targetId = loadId || remixId;
-    if (targetId) {
-      try {
-        const projects: SharedProject[] = JSON.parse(localStorage.getItem('aurora_shared_projects') || '[]');
-        const p = projects.find(proj => proj.id === targetId);
-        if (p?.data) {
-          const workspaceXml = runtime.loadAurFile(p.data);
-          if (workspaceXml && workspaceRef.current) {
-            workspaceRef.current.clear();
-            const dom = Blockly.utils.xml.textToDom(workspaceXml);
-            Blockly.Xml.domToWorkspace(dom, workspaceRef.current);
-          }
-          if (runtime.sprites.length > 0) setSelectedSpriteId(runtime.sprites[0].id);
-          if (loadId) {
-            setSharedProjectId(loadId);
-            setShareName(p.name);
-            setShareAuthor(p.author);
-            if (p.remixOf) setRemixOf(p.remixOf);
-          } else if (remixId) {
-            // Remix: new project that references the original
-            setSharedProjectId(null);
-            setShareName(`${p.name} Remix`);
-            setShareAuthor('');
-            setRemixOf({ id: p.id, name: p.name });
-          }
-          setRenderKey(n => n + 1);
-        }
-      } catch {}
-    }
+    if (!targetId) return;
+    fetchSharedProject(targetId).then(p => {
+      if (!p?.data) return;
+      const workspaceXml = runtime.loadAurFile(p.data);
+      if (workspaceXml && workspaceRef.current) {
+        workspaceRef.current.clear();
+        const dom = Blockly.utils.xml.textToDom(workspaceXml);
+        Blockly.Xml.domToWorkspace(dom, workspaceRef.current);
+      }
+      if (runtime.sprites.length > 0) setSelectedSpriteId(runtime.sprites[0].id);
+      if (loadId) {
+        setSharedProjectId(loadId);
+        setShareName(p.name);
+        setShareAuthor(p.author);
+        if (p.remixOf) setRemixOf(p.remixOf);
+      } else if (remixId) {
+        setSharedProjectId(null);
+        setShareName(`${p.name} Remix`);
+        setShareAuthor('');
+        setRemixOf({ id: p.id, name: p.name });
+      }
+      setRenderKey(n => n + 1);
+    });
   }, [searchParams, runtime]);
 
 
@@ -246,7 +250,7 @@ export default function Index() {
     return '';
   }, []);
 
-  const handleShare = useCallback(() => {
+  const handleShare = useCallback(async () => {
     let workspaceXml = '';
     if (workspaceRef.current) {
       const dom = Blockly.Xml.workspaceToDom(workspaceRef.current);
@@ -259,11 +263,11 @@ export default function Index() {
       id, name: shareName || 'Untitled', author: shareAuthor || 'Anonymous',
       thumbnail, data, createdAt: Date.now(), remixOf,
     };
-    saveSharedProject(project);
+    await saveSharedProject(project);
     setSharedProjectId(id);
     setShowShare(false);
     alert('Project shared! You can find it on the homepage.');
-  }, [runtime, shareName, shareAuthor, sharedProjectId, getCanvasThumbnail]);
+  }, [runtime, shareName, shareAuthor, sharedProjectId, getCanvasThumbnail, remixOf]);
 
   const handleMouseDown = useCallback((x: number, y: number) => {
     runtime.handleMouseDown(x, y);
