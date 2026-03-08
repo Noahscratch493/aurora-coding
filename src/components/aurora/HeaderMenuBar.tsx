@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFile, faFolderOpen, faFloppyDisk, faShareNodes, faRotateLeft, faRotateRight, faCircleQuestion, faCode, faSparkles } from '@fortawesome/free-solid-svg-icons';
+import { faFile, faFolderOpen, faFloppyDisk, faShareNodes, faRotateLeft, faRotateRight, faCircleQuestion, faCode } from '@fortawesome/free-solid-svg-icons';
 import {
   Menubar,
   MenubarContent,
