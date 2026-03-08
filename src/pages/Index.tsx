@@ -12,7 +12,7 @@ import HeaderMenuBar from '@/components/aurora/HeaderMenuBar';
 import HowToCode from '@/components/aurora/HowToCode';
 import CostumeEditor from '@/components/aurora/CostumeEditor';
 import { AuroraRuntime, createDefaultSprite, SpriteState } from '@/lib/aurora-runtime';
-import { buildToolbox } from '@/lib/aurora-blocks';
+import '@/lib/aurora-blocks';
 import { Link } from 'react-router-dom';
 
 // Cookie-based custom background storage
