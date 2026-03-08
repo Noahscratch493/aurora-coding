@@ -25,6 +25,7 @@ export interface SpriteState {
   draggable: boolean;
   flipX: boolean;
   flipY: boolean;
+  rotationStyle: 'all-around' | 'left-right' | 'dont-rotate';
 }
 
 export interface PenLine {
@@ -327,6 +328,18 @@ export class AuroraRuntime {
 
       setDraggable(draggable: boolean) {
         spriteState.draggable = draggable;
+      },
+
+      setRotationStyle(style: string) {
+        spriteState.rotationStyle = style as SpriteState['rotationStyle'];
+        runtime.onUpdate();
+      },
+
+      pointTowardsMouse() {
+        const dx = runtime.mouseX - spriteState.x;
+        const dy = runtime.mouseY - spriteState.y;
+        spriteState.direction = (Math.atan2(dx, dy) * 180 / Math.PI + 360) % 360;
+        runtime.onUpdate();
       },
 
       clearEffects() { spriteState.colorEffect = 0; spriteState.flipX = false; spriteState.flipY = false; runtime.onUpdate(); },
