@@ -1,4 +1,4 @@
-// Aurora Runtime Engine
+// Aurora Runtime Engine — v2 with AI Chat support
 
 export interface Costume {
   id: string;
