@@ -114,6 +114,7 @@ export default function Index() {
       const enabled: string[] = [];
       if (extensions.iframe) enabled.push('iframe');
       if (extensions.fetch) enabled.push('fetch');
+      if (extensions.ai) enabled.push('ai');
       const toolbox = buildToolbox(enabled);
       workspaceRef.current.updateToolbox(toolbox as any);
     }
