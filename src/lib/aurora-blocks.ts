@@ -1084,6 +1084,16 @@ javascriptGenerator.forBlock['fetch_json_field'] = function(block: Blockly.Block
   const field = javascriptGenerator.valueToCode(block, 'FIELD', Order.ATOMIC) || "''";
   return [`runtime.getJsonField(${data}, ${field})`, Order.FUNCTION_CALL];
 };
+// AI Chat generators
+javascriptGenerator.forBlock['ai_ask'] = function(block: Blockly.Block) {
+  const prompt = javascriptGenerator.valueToCode(block, 'PROMPT', Order.ATOMIC) || "''";
+  return [`await runtime.askAI(${prompt})`, Order.AWAIT];
+};
+
+javascriptGenerator.forBlock['ai_say'] = function(block: Blockly.Block) {
+  const prompt = javascriptGenerator.valueToCode(block, 'PROMPT', Order.ATOMIC) || "''";
+  return `sprite.say(await runtime.askAI(${prompt}));\n`;
+};
 
 // Toolbox definition
 export function buildToolbox() {
