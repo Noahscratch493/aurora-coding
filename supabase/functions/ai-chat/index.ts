@@ -9,7 +9,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { prompt } = await req.json();
+    const { prompt, personality } = await req.json();
     if (!prompt || typeof prompt !== "string") {
       return new Response(JSON.stringify({ error: "Missing prompt" }), {
         status: 400,
@@ -20,6 +20,10 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
+    const systemPrompt = personality && typeof personality === "string" && personality.trim()
+      ? `You are playing a character in a creative coding project for kids. Your personality: ${personality.trim()}. Keep answers short (2-3 sentences max), fun, and appropriate for all ages.`
+      : "You are a helpful AI assistant inside a creative coding environment for kids. Keep answers clear and concise. Max 2-3 sentences.";
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -29,7 +33,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
-          { role: "system", content: "You are a helpful AI assistant inside a creative coding environment for kids. Keep answers short, fun, and appropriate for all ages. Max 2-3 sentences." },
+          { role: "system", content: systemPrompt },
           { role: "user", content: prompt },
         ],
       }),
