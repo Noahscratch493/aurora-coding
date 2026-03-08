@@ -25,6 +25,7 @@ export interface SpriteState {
   draggable: boolean;
   flipX: boolean;
   flipY: boolean;
+  rotationStyle: 'all-around' | 'left-right' | 'dont-rotate';
 }
 
 export interface PenLine {
@@ -50,7 +51,7 @@ export function createDefaultSprite(id: string, name: string): SpriteState {
     id, name, x: 0, y: 0, direction: 90, size: 100, visible: true,
     costumes: [...DEFAULT_COSTUMES], currentCostumeIndex: 0,
     sayText: '', thinkText: '', penDown: false, penColor: '#4C97FF', penSize: 2, colorEffect: 0,
-    draggable: false, flipX: false, flipY: false,
+    draggable: false, flipX: false, flipY: false, rotationStyle: 'all-around',
   };
 }
 
@@ -329,6 +330,18 @@ export class AuroraRuntime {
         spriteState.draggable = draggable;
       },
 
+      setRotationStyle(style: string) {
+        spriteState.rotationStyle = style as SpriteState['rotationStyle'];
+        runtime.onUpdate();
+      },
+
+      pointTowardsMouse() {
+        const dx = runtime.mouseX - spriteState.x;
+        const dy = runtime.mouseY - spriteState.y;
+        spriteState.direction = (Math.atan2(dx, dy) * 180 / Math.PI + 360) % 360;
+        runtime.onUpdate();
+      },
+
       clearEffects() { spriteState.colorEffect = 0; spriteState.flipX = false; spriteState.flipY = false; runtime.onUpdate(); },
 
       bounceOffEdge() {
@@ -404,6 +417,7 @@ export class AuroraRuntime {
           draggable: s.draggable || false,
           flipX: s.flipX || false,
           flipY: s.flipY || false,
+          rotationStyle: s.rotationStyle || 'all-around',
         }));
       }
       if (parsed.stageBackground) this.stageBackground = parsed.stageBackground;

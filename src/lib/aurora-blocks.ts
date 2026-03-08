@@ -239,13 +239,45 @@ Blockly.Blocks['switch_costume'] = {
 Blockly.Blocks['flip_costume'] = {
   init(this: Blockly.Block) {
     this.appendDummyInput()
-      .appendField('flip costume')
+      .appendField('flip')
       .appendField(new Blockly.FieldDropdown([
-        ['horizontally', 'horizontal'], ['vertically', 'vertical'],
+        ['left-right', 'horizontal'], ['up-down', 'vertical'],
       ]), 'DIRECTION');
     this.setPreviousStatement(true, null);
     this.setNextStatement(true, null);
     this.setColour(280);
+  },
+};
+
+Blockly.Blocks['set_rotation_style'] = {
+  init(this: Blockly.Block) {
+    this.appendDummyInput()
+      .appendField('set rotation style')
+      .appendField(new Blockly.FieldDropdown([
+        ['left-right', 'left-right'],
+        ['don\'t rotate', 'dont-rotate'],
+        ['all around', 'all-around'],
+      ]), 'STYLE');
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setColour(220);
+  },
+};
+
+Blockly.Blocks['point_towards'] = {
+  init(this: Blockly.Block) {
+    this.appendDummyInput()
+      .appendField('point towards')
+      .appendField(new Blockly.FieldDropdown([
+        ['mouse-pointer', '_mouse_'],
+        ['right (90)', '90'],
+        ['left (-90)', '-90'],
+        ['up (0)', '0'],
+        ['down (180)', '180'],
+      ]), 'TARGET');
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setColour(220);
   },
 };
 
@@ -811,6 +843,19 @@ javascriptGenerator.forBlock['flip_costume'] = function(block: Blockly.Block) {
   return `sprite.flipCostume('${dir}');\nawait runtime.tick();\n`;
 };
 
+javascriptGenerator.forBlock['set_rotation_style'] = function(block: Blockly.Block) {
+  const style = block.getFieldValue('STYLE');
+  return `sprite.setRotationStyle('${style}');\n`;
+};
+
+javascriptGenerator.forBlock['point_towards'] = function(block: Blockly.Block) {
+  const target = block.getFieldValue('TARGET');
+  if (target === '_mouse_') {
+    return `sprite.pointTowardsMouse();\nawait runtime.tick();\n`;
+  }
+  return `sprite.direction = ${target};\nawait runtime.tick();\n`;
+};
+
 javascriptGenerator.forBlock['costume_number'] = function() {
   return [`sprite.costumeNumber`, Order.ATOMIC];
 };
@@ -1064,6 +1109,8 @@ export function buildToolbox(enabledExtensions: string[] = []) {
         { kind: 'block', type: 'change_y', inputs: { DY: { shadow: { type: 'math_number', fields: { NUM: 10 }}}}},
         { kind: 'block', type: 'point_direction', inputs: { DIR: { shadow: { type: 'math_number', fields: { NUM: 90 }}}}},
         { kind: 'block', type: 'bounce_edge' },
+        { kind: 'block', type: 'point_towards' },
+        { kind: 'block', type: 'set_rotation_style' },
         { kind: 'block', type: 'set_draggable' },
         { kind: 'sep', gap: 16 },
         { kind: 'block', type: 'x_position' },
