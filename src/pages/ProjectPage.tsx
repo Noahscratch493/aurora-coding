@@ -15,6 +15,7 @@ interface SharedProject {
   thumbnail: string;
   data: string;
   createdAt: number;
+  remixOf?: { id: string; name: string; };
 }
 
 function getProject(id: string): SharedProject | null {
@@ -123,12 +124,25 @@ export default function ProjectPage() {
       </header>
 
       <div className="max-w-4xl mx-auto px-6 py-8">
+        {project.remixOf && (
+          <div className="mb-4 px-4 py-2.5 rounded-lg bg-muted border border-border text-sm text-muted-foreground">
+            🔀 This project is a remix of{' '}
+            <Link to={`/project/${project.remixOf.id}`} className="text-primary hover:underline font-medium">
+              {project.remixOf.name}
+            </Link>
+          </div>
+        )}
+
         <div className="flex items-start justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-foreground">{project.name}</h1>
             <p className="text-sm text-muted-foreground mt-1">by {project.author}</p>
           </div>
           <div className="flex items-center gap-2">
+            <Link to={`/editor?remix=${project.id}`}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-primary text-primary-foreground hover:opacity-90 transition-opacity">
+              🔀 Remix
+            </Link>
             <Link to={`/editor?load=${project.id}`}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-accent text-accent-foreground hover:opacity-90 transition-opacity">
               <FontAwesomeIcon icon={faCode} className="w-3 h-3" /> See Inside

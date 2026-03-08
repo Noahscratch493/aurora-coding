@@ -35,6 +35,7 @@ function removeSavedBg(index: number) {
 // Shared project storage
 interface SharedProject {
   id: string; name: string; author: string; thumbnail: string; data: string; createdAt: number;
+  remixOf?: { id: string; name: string; };
 }
 function getSharedProjects(): SharedProject[] {
   try { return JSON.parse(localStorage.getItem('aurora_shared_projects') || '[]'); } catch { return []; }
@@ -53,7 +54,7 @@ interface ExtState { iframe: boolean; fetch: boolean; ai: boolean; }
 const EXTENSIONS = [
   { id: 'iframe' as const, name: 'Iframe', description: 'Embed web pages in the stage. Play URLs and toggle iframe visibility with blocks.', icon: faGlobe, color: '#5B80A5' },
   { id: 'fetch' as const, name: 'Fetch', description: 'Make HTTP requests to fetch data from URLs. Parse JSON responses in your projects.', icon: faDownload, color: '#CF63CF' },
-  { id: 'ai' as const, name: 'AI', description: 'Connect to AI models to generate text, answer questions, and more. (Coming Soon)', icon: faRobot, color: '#FF6680' },
+  { id: 'ai' as const, name: 'AI Chat', description: 'Connect to AI models to generate text, answer questions, and more. (Coming Soon)', icon: faRobot, color: '#FF6680' },
 ];
 
 export default function Index() {
@@ -72,6 +73,7 @@ export default function Index() {
   const [shareName, setShareName] = useState('My Project');
   const [shareAuthor, setShareAuthor] = useState('');
   const [sharedProjectId, setSharedProjectId] = useState<string | null>(null);
+  const [remixOf, setRemixOf] = useState<{ id: string; name: string } | undefined>(undefined);
   const [extensions, setExtensions] = useState<ExtState>({ iframe: false, fetch: false, ai: false });
   const [customBgs, setCustomBgs] = useState<string[]>(getSavedBackgrounds());
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -87,10 +89,12 @@ export default function Index() {
   // Load project from URL param
   useEffect(() => {
     const loadId = searchParams.get('load');
-    if (loadId) {
+    const remixId = searchParams.get('remix');
+    const targetId = loadId || remixId;
+    if (targetId) {
       try {
         const projects: SharedProject[] = JSON.parse(localStorage.getItem('aurora_shared_projects') || '[]');
-        const p = projects.find(proj => proj.id === loadId);
+        const p = projects.find(proj => proj.id === targetId);
         if (p?.data) {
           const workspaceXml = runtime.loadAurFile(p.data);
           if (workspaceXml && workspaceRef.current) {
@@ -99,9 +103,18 @@ export default function Index() {
             Blockly.Xml.domToWorkspace(dom, workspaceRef.current);
           }
           if (runtime.sprites.length > 0) setSelectedSpriteId(runtime.sprites[0].id);
-          setSharedProjectId(loadId);
-          setShareName(p.name);
-          setShareAuthor(p.author);
+          if (loadId) {
+            setSharedProjectId(loadId);
+            setShareName(p.name);
+            setShareAuthor(p.author);
+            if (p.remixOf) setRemixOf(p.remixOf);
+          } else if (remixId) {
+            // Remix: new project that references the original
+            setSharedProjectId(null);
+            setShareName(`${p.name} Remix`);
+            setShareAuthor('');
+            setRemixOf({ id: p.id, name: p.name });
+          }
           setRenderKey(n => n + 1);
         }
       } catch {}
@@ -263,7 +276,7 @@ export default function Index() {
     const thumbnail = getCanvasThumbnail();
     const project: SharedProject = {
       id, name: shareName || 'Untitled', author: shareAuthor || 'Anonymous',
-      thumbnail, data, createdAt: Date.now(),
+      thumbnail, data, createdAt: Date.now(), remixOf,
     };
     saveSharedProject(project);
     setSharedProjectId(id);
