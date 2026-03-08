@@ -239,13 +239,45 @@ Blockly.Blocks['switch_costume'] = {
 Blockly.Blocks['flip_costume'] = {
   init(this: Blockly.Block) {
     this.appendDummyInput()
-      .appendField('flip costume')
+      .appendField('flip')
       .appendField(new Blockly.FieldDropdown([
-        ['horizontally', 'horizontal'], ['vertically', 'vertical'],
+        ['left-right', 'horizontal'], ['up-down', 'vertical'],
       ]), 'DIRECTION');
     this.setPreviousStatement(true, null);
     this.setNextStatement(true, null);
     this.setColour(280);
+  },
+};
+
+Blockly.Blocks['set_rotation_style'] = {
+  init(this: Blockly.Block) {
+    this.appendDummyInput()
+      .appendField('set rotation style')
+      .appendField(new Blockly.FieldDropdown([
+        ['left-right', 'left-right'],
+        ['don\'t rotate', 'dont-rotate'],
+        ['all around', 'all-around'],
+      ]), 'STYLE');
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setColour(220);
+  },
+};
+
+Blockly.Blocks['point_towards'] = {
+  init(this: Blockly.Block) {
+    this.appendDummyInput()
+      .appendField('point towards')
+      .appendField(new Blockly.FieldDropdown([
+        ['mouse-pointer', '_mouse_'],
+        ['right (90)', '90'],
+        ['left (-90)', '-90'],
+        ['up (0)', '0'],
+        ['down (180)', '180'],
+      ]), 'TARGET');
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setColour(220);
   },
 };
 
