@@ -5,6 +5,7 @@ interface StageCanvasProps {
   sprites: SpriteState[];
   penLines: PenLine[];
   stageBackground: StageBackground;
+  renderKey: number;
   onMouseMove?: (x: number, y: number) => void;
   onClick?: () => void;
 }
@@ -34,16 +35,16 @@ function drawSprite(ctx: CanvasRenderingContext2D, sprite: SpriteState) {
     const w = (img.width / img.height) * h;
     ctx.drawImage(img, -w / 2, -h / 2, w, h);
   } else {
-    // Fallback: simple circle
+    // Fallback: colored circle with letter
     ctx.fillStyle = '#FF9F43';
     ctx.beginPath();
     ctx.arc(0, 0, 20, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = '#fff';
-    ctx.font = '10px sans-serif';
+    ctx.font = 'bold 14px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('?', 0, 0);
+    ctx.fillText(sprite.name.charAt(0), 0, 0);
   }
 
   ctx.filter = 'none';
@@ -72,19 +73,16 @@ function drawSprite(ctx: CanvasRenderingContext2D, sprite: SpriteState) {
     if (isThink) {
       ctx.beginPath();
       ctx.arc(bx + 6, by + ph + 5, 4, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
+      ctx.fill(); ctx.stroke();
       ctx.beginPath();
       ctx.arc(bx + 2, by + ph + 12, 2.5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
+      ctx.fill(); ctx.stroke();
     } else {
       ctx.beginPath();
       ctx.moveTo(bx + 4, by + ph);
       ctx.lineTo(bx - 4, by + ph + 10);
       ctx.lineTo(bx + 14, by + ph);
-      ctx.fill();
-      ctx.stroke();
+      ctx.fill(); ctx.stroke();
     }
 
     ctx.fillStyle = '#222';
@@ -94,7 +92,7 @@ function drawSprite(ctx: CanvasRenderingContext2D, sprite: SpriteState) {
   }
 }
 
-export default function StageCanvas({ sprites, penLines, stageBackground, onMouseMove, onClick }: StageCanvasProps) {
+export default function StageCanvas({ sprites, penLines, stageBackground, renderKey, onMouseMove, onClick }: StageCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Preload all costume images
@@ -102,6 +100,7 @@ export default function StageCanvas({ sprites, penLines, stageBackground, onMous
     sprites.forEach(s => s.costumes.forEach(c => loadImage(c.dataUrl).catch(() => {})));
   }, [sprites]);
 
+  // Re-draw canvas on EVERY render (renderKey changes each frame)
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -116,7 +115,7 @@ export default function StageCanvas({ sprites, penLines, stageBackground, onMous
       } else {
         ctx.fillStyle = '#1a1a2e';
         ctx.fillRect(0, 0, STAGE_WIDTH, STAGE_HEIGHT);
-        loadImage(stageBackground.value).then(() => {});
+        loadImage(stageBackground.value).catch(() => {});
       }
     } else {
       ctx.fillStyle = stageBackground.value;
@@ -160,7 +159,7 @@ export default function StageCanvas({ sprites, penLines, stageBackground, onMous
     for (const sprite of sprites) {
       drawSprite(ctx, sprite);
     }
-  }, [sprites, penLines, stageBackground]);
+  }, [renderKey]); // renderKey changes every frame
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();

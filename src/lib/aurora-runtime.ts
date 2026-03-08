@@ -1,9 +1,9 @@
-// Aurora Runtime Engine - executes generated code on a canvas
+// Aurora Runtime Engine
 
 export interface Costume {
   id: string;
   name: string;
-  dataUrl: string; // URL or data URL
+  dataUrl: string;
 }
 
 export interface SpriteState {
@@ -25,12 +25,8 @@ export interface SpriteState {
 }
 
 export interface PenLine {
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-  color: string;
-  size: number;
+  x1: number; y1: number; x2: number; y2: number;
+  color: string; size: number;
 }
 
 export interface StageBackground {
@@ -48,40 +44,23 @@ export const DEFAULT_COSTUMES: Costume[] = [
 
 export function createDefaultSprite(id: string, name: string): SpriteState {
   return {
-    id,
-    name,
-    x: 0,
-    y: 0,
-    direction: 90,
-    size: 100,
-    visible: true,
-    costumes: [...DEFAULT_COSTUMES],
-    currentCostumeIndex: 0,
-    sayText: '',
-    thinkText: '',
-    penDown: false,
-    penColor: '#4C97FF',
-    penSize: 2,
-    colorEffect: 0,
+    id, name, x: 0, y: 0, direction: 90, size: 100, visible: true,
+    costumes: [...DEFAULT_COSTUMES], currentCostumeIndex: 0,
+    sayText: '', thinkText: '', penDown: false, penColor: '#4C97FF', penSize: 2, colorEffect: 0,
   };
 }
 
-// Image cache for sprite rendering
+// Image cache
 const imageCache = new Map<string, HTMLImageElement>();
 const loadingImages = new Map<string, Promise<HTMLImageElement>>();
 
 export function loadImage(src: string): Promise<HTMLImageElement> {
   if (imageCache.has(src)) return Promise.resolve(imageCache.get(src)!);
   if (loadingImages.has(src)) return loadingImages.get(src)!;
-  
   const promise = new Promise<HTMLImageElement>((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      imageCache.set(src, img);
-      loadingImages.delete(src);
-      resolve(img);
-    };
+    img.onload = () => { imageCache.set(src, img); loadingImages.delete(src); resolve(img); };
     img.onerror = reject;
     img.src = src;
   });
@@ -101,30 +80,22 @@ export class AuroraRuntime {
   mouseX = 0;
   mouseY = 0;
   answer = '';
+  iframeUrl = '';
+  iframeVisible = false;
   private keysPressed = new Set<string>();
   private onUpdate: () => void;
-  private abortController: AbortController | null = null;
 
   constructor(onUpdate: () => void) {
     this.onUpdate = onUpdate;
     this.sprites = [createDefaultSprite('sprite1', 'Sprite 1')];
-    // Preload default sprite images
-    DEFAULT_COSTUMES.forEach(c => loadImage(c.dataUrl));
+    DEFAULT_COSTUMES.forEach(c => loadImage(c.dataUrl).then(() => this.onUpdate()));
   }
 
-  start() {
-    this.running = true;
-    this.abortController = new AbortController();
-  }
+  start() { this.running = true; }
 
   stopAll() {
     this.running = false;
-    this.abortController?.abort();
-    this.abortController = null;
-    this.sprites.forEach(s => {
-      s.sayText = '';
-      s.thinkText = '';
-    });
+    this.sprites.forEach(s => { s.sayText = ''; s.thinkText = ''; });
     this.onUpdate();
   }
 
@@ -136,9 +107,7 @@ export class AuroraRuntime {
 
   async wait(secs: number) {
     const end = Date.now() + secs * 1000;
-    while (Date.now() < end && this.running) {
-      await this.tick();
-    }
+    while (Date.now() < end && this.running) { await this.tick(); }
   }
 
   random(from: number, to: number) {
@@ -154,15 +123,23 @@ export class AuroraRuntime {
   handleKeyUp(key: string) { this.keysPressed.delete(key); }
   handleMouseMove(x: number, y: number) { this.mouseX = x; this.mouseY = y; }
 
-  clearPen() {
-    this.penLines = [];
-    this.onUpdate();
+  clearPen() { this.penLines = []; this.onUpdate(); }
+  broadcast(_msg: string) { /* TODO */ }
+  async ask(question: string) { this.answer = prompt(question) || ''; }
+
+  // Extension helpers
+  showIframe(url: string) { this.iframeUrl = url; this.iframeVisible = true; this.onUpdate(); }
+  hideIframe() { this.iframeVisible = false; this.onUpdate(); }
+
+  async fetchUrl(url: string): Promise<string> {
+    try {
+      const resp = await fetch(url);
+      return await resp.text();
+    } catch (e) { return ''; }
   }
 
-  broadcast(_msg: string) { /* TODO */ }
-
-  async ask(question: string) {
-    this.answer = prompt(question) || '';
+  getJsonField(data: string, field: string): string {
+    try { return String(JSON.parse(data)[field] || ''); } catch { return ''; }
   }
 
   addSprite(id: string, name: string) {
@@ -177,11 +154,18 @@ export class AuroraRuntime {
 
   createSpriteProxy(spriteState: SpriteState): Record<string, any> {
     const runtime = this;
+
+    const addPenLine = (x1: number, y1: number, x2: number, y2: number) => {
+      if (spriteState.penDown) {
+        runtime.penLines.push({ x1, y1, x2, y2, color: spriteState.penColor, size: spriteState.penSize });
+      }
+    };
+
     return {
       get x() { return spriteState.x; },
       get y() { return spriteState.y; },
       get direction() { return spriteState.direction; },
-      set direction(d: number) { spriteState.direction = d; },
+      set direction(d: number) { spriteState.direction = d; runtime.onUpdate(); },
       get visible() { return spriteState.visible; },
       set visible(v: boolean) { spriteState.visible = v; runtime.onUpdate(); },
       get penDown() { return spriteState.penDown; },
@@ -192,20 +176,16 @@ export class AuroraRuntime {
       set penSize(s: number) { spriteState.penSize = s; },
       get colorEffect() { return spriteState.colorEffect; },
       set colorEffect(v: number) { spriteState.colorEffect = v; runtime.onUpdate(); },
+      get size() { return spriteState.size; },
+      get costumeNumber() { return spriteState.currentCostumeIndex + 1; },
+      get costumeName() { return spriteState.costumes[spriteState.currentCostumeIndex]?.name || ''; },
 
       async move(steps: number) {
         const rad = spriteState.direction * Math.PI / 180;
-        const oldX = spriteState.x;
-        const oldY = spriteState.y;
+        const oldX = spriteState.x, oldY = spriteState.y;
         spriteState.x += Math.sin(rad) * steps;
         spriteState.y += Math.cos(rad) * steps;
-        if (spriteState.penDown) {
-          runtime.penLines.push({
-            x1: oldX, y1: oldY,
-            x2: spriteState.x, y2: spriteState.y,
-            color: spriteState.penColor, size: spriteState.penSize,
-          });
-        }
+        addPenLine(oldX, oldY, spriteState.x, spriteState.y);
         runtime.onUpdate();
       },
 
@@ -220,36 +200,21 @@ export class AuroraRuntime {
       },
 
       async goTo(x: number, y: number) {
-        const oldX = spriteState.x;
-        const oldY = spriteState.y;
-        spriteState.x = x;
-        spriteState.y = y;
-        if (spriteState.penDown) {
-          runtime.penLines.push({
-            x1: oldX, y1: oldY, x2: x, y2: y,
-            color: spriteState.penColor, size: spriteState.penSize,
-          });
-        }
+        const oldX = spriteState.x, oldY = spriteState.y;
+        spriteState.x = x; spriteState.y = y;
+        addPenLine(oldX, oldY, x, y);
         runtime.onUpdate();
       },
 
       async glideTo(secs: number, x: number, y: number) {
-        const startX = spriteState.x;
-        const startY = spriteState.y;
+        const startX = spriteState.x, startY = spriteState.y;
         const frames = Math.max(1, Math.round(secs * 30));
         for (let i = 1; i <= frames && runtime.running; i++) {
           const t = i / frames;
-          const oldX = spriteState.x;
-          const oldY = spriteState.y;
+          const oldX = spriteState.x, oldY = spriteState.y;
           spriteState.x = startX + (x - startX) * t;
           spriteState.y = startY + (y - startY) * t;
-          if (spriteState.penDown) {
-            runtime.penLines.push({
-              x1: oldX, y1: oldY,
-              x2: spriteState.x, y2: spriteState.y,
-              color: spriteState.penColor, size: spriteState.penSize,
-            });
-          }
+          addPenLine(oldX, oldY, spriteState.x, spriteState.y);
           await runtime.tick();
         }
       },
@@ -257,24 +222,14 @@ export class AuroraRuntime {
       async setX(x: number) {
         const oldX = spriteState.x;
         spriteState.x = x;
-        if (spriteState.penDown) {
-          runtime.penLines.push({
-            x1: oldX, y1: spriteState.y, x2: x, y2: spriteState.y,
-            color: spriteState.penColor, size: spriteState.penSize,
-          });
-        }
+        addPenLine(oldX, spriteState.y, x, spriteState.y);
         runtime.onUpdate();
       },
 
       async setY(y: number) {
         const oldY = spriteState.y;
         spriteState.y = y;
-        if (spriteState.penDown) {
-          runtime.penLines.push({
-            x1: spriteState.x, y1: oldY, x2: spriteState.x, y2: y,
-            color: spriteState.penColor, size: spriteState.penSize,
-          });
-        }
+        addPenLine(spriteState.x, oldY, spriteState.x, y);
         runtime.onUpdate();
       },
 
@@ -282,14 +237,12 @@ export class AuroraRuntime {
       async changeY(dy: number) { await this.setY(spriteState.y + dy); },
 
       async say(msg: string) {
-        spriteState.sayText = String(msg);
-        spriteState.thinkText = '';
+        spriteState.sayText = String(msg); spriteState.thinkText = '';
         runtime.onUpdate();
       },
 
       async sayFor(msg: string, secs: number) {
-        spriteState.sayText = String(msg);
-        spriteState.thinkText = '';
+        spriteState.sayText = String(msg); spriteState.thinkText = '';
         runtime.onUpdate();
         await runtime.wait(secs);
         spriteState.sayText = '';
@@ -297,8 +250,7 @@ export class AuroraRuntime {
       },
 
       async think(msg: string) {
-        spriteState.thinkText = String(msg);
-        spriteState.sayText = '';
+        spriteState.thinkText = String(msg); spriteState.sayText = '';
         runtime.onUpdate();
       },
 
@@ -313,7 +265,12 @@ export class AuroraRuntime {
       },
 
       nextCostume() {
-        spriteState.currentCostumeIndex = (spriteState.currentCostumeIndex + 1) % spriteState.costumes.length;
+        spriteState.currentCostumeIndex = (spriteState.currentCostumeIndex + 1) % Math.max(1, spriteState.costumes.length);
+        runtime.onUpdate();
+      },
+
+      prevCostume() {
+        spriteState.currentCostumeIndex = (spriteState.currentCostumeIndex - 1 + spriteState.costumes.length) % Math.max(1, spriteState.costumes.length);
         runtime.onUpdate();
       },
 
@@ -323,14 +280,10 @@ export class AuroraRuntime {
         runtime.onUpdate();
       },
 
-      clearEffects() {
-        spriteState.colorEffect = 0;
-        runtime.onUpdate();
-      },
+      clearEffects() { spriteState.colorEffect = 0; runtime.onUpdate(); },
 
       bounceOffEdge() {
-        const hw = STAGE_WIDTH / 2;
-        const hh = STAGE_HEIGHT / 2;
+        const hw = STAGE_WIDTH / 2, hh = STAGE_HEIGHT / 2;
         if (spriteState.x > hw || spriteState.x < -hw) {
           spriteState.direction = (360 - spriteState.direction) % 360;
           spriteState.x = Math.max(-hw, Math.min(hw, spriteState.x));
@@ -343,8 +296,7 @@ export class AuroraRuntime {
       },
 
       isTouchingEdge() {
-        const hw = STAGE_WIDTH / 2;
-        const hh = STAGE_HEIGHT / 2;
+        const hw = STAGE_WIDTH / 2, hh = STAGE_HEIGHT / 2;
         return Math.abs(spriteState.x) >= hw - 10 || Math.abs(spriteState.y) >= hh - 10;
       },
 
@@ -355,7 +307,6 @@ export class AuroraRuntime {
   async executeCode(code: string, spriteState: SpriteState) {
     const sprite = this.createSpriteProxy(spriteState);
     const runtime = this;
-
     try {
       const asyncFn = new Function('sprite', 'runtime', `
         return (async () => {
@@ -364,45 +315,25 @@ export class AuroraRuntime {
       `);
       await asyncFn(sprite, runtime);
     } catch (e: any) {
-      if (e.message !== 'STOPPED') {
-        console.error('Aurora runtime error:', e);
-      }
+      if (e.message !== 'STOPPED') console.error('Aurora runtime error:', e);
     }
   }
 
-  // Serialize project to .aur format
   toAurFile(workspaceXml: string): string {
     return JSON.stringify({
-      version: 1,
-      workspace: workspaceXml,
-      sprites: this.sprites.map(s => ({
-        ...s,
-        costumes: s.costumes.map(c => ({
-          id: c.id,
-          name: c.name,
-          dataUrl: c.dataUrl,
-        })),
-      })),
-      stageBackground: this.stageBackground,
+      version: 1, workspace: workspaceXml,
+      sprites: this.sprites, stageBackground: this.stageBackground,
     }, null, 2);
   }
 
-  // Load from .aur format
   loadAurFile(data: string) {
     try {
       const parsed = JSON.parse(data);
-      if (parsed.sprites) {
-        this.sprites = parsed.sprites;
-      }
-      if (parsed.stageBackground) {
-        this.stageBackground = parsed.stageBackground;
-      }
+      if (parsed.sprites) this.sprites = parsed.sprites;
+      if (parsed.stageBackground) this.stageBackground = parsed.stageBackground;
       this.penLines = [];
       this.onUpdate();
       return parsed.workspace || null;
-    } catch (e) {
-      console.error('Failed to load .aur file:', e);
-      return null;
-    }
+    } catch (e) { console.error('Failed to load .aur file:', e); return null; }
   }
 }
