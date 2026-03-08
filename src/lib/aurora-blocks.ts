@@ -264,22 +264,6 @@ Blockly.Blocks['set_rotation_style'] = {
   },
 };
 
-Blockly.Blocks['point_towards'] = {
-  init(this: Blockly.Block) {
-    this.appendDummyInput()
-      .appendField('point towards')
-      .appendField(new Blockly.FieldDropdown([
-        ['mouse-pointer', '_mouse_'],
-        ['right (90)', '90'],
-        ['left (-90)', '-90'],
-        ['up (0)', '0'],
-        ['down (180)', '180'],
-      ]), 'TARGET');
-    this.setPreviousStatement(true, null);
-    this.setNextStatement(true, null);
-    this.setColour(220);
-  },
-};
 
 Blockly.Blocks['costume_number'] = {
   init(this: Blockly.Block) {
@@ -848,13 +832,6 @@ javascriptGenerator.forBlock['set_rotation_style'] = function(block: Blockly.Blo
   return `sprite.setRotationStyle('${style}');\n`;
 };
 
-javascriptGenerator.forBlock['point_towards'] = function(block: Blockly.Block) {
-  const target = block.getFieldValue('TARGET');
-  if (target === '_mouse_') {
-    return `sprite.pointTowardsMouse();\nawait runtime.tick();\n`;
-  }
-  return `sprite.direction = ${target};\nawait runtime.tick();\n`;
-};
 
 javascriptGenerator.forBlock['costume_number'] = function() {
   return [`sprite.costumeNumber`, Order.ATOMIC];
@@ -1109,7 +1086,6 @@ export function buildToolbox(enabledExtensions: string[] = []) {
         { kind: 'block', type: 'change_y', inputs: { DY: { shadow: { type: 'math_number', fields: { NUM: 10 }}}}},
         { kind: 'block', type: 'point_direction', inputs: { DIR: { shadow: { type: 'math_number', fields: { NUM: 90 }}}}},
         { kind: 'block', type: 'bounce_edge' },
-        { kind: 'block', type: 'point_towards' },
         { kind: 'block', type: 'set_rotation_style' },
         { kind: 'block', type: 'set_draggable' },
         { kind: 'sep', gap: 16 },
@@ -1215,34 +1191,30 @@ export function buildToolbox(enabledExtensions: string[] = []) {
     },
   ];
 
-  // More category with extensions
-  const moreContents: any[] = [];
-
+  // Add extension categories if enabled
   if (enabledExtensions.includes('iframe')) {
-    moreContents.push(
-      { kind: 'label', text: '── Iframe ──' },
-      { kind: 'block', type: 'iframe_show', inputs: { URL: { shadow: { type: 'text', fields: { TEXT: 'https://example.com' }}}}},
-      { kind: 'block', type: 'iframe_hide' },
-    );
+    contents.push({
+      kind: 'category',
+      name: '🌐 Iframe',
+      colour: '#5B80A5',
+      contents: [
+        { kind: 'block', type: 'iframe_show', inputs: { URL: { shadow: { type: 'text', fields: { TEXT: 'https://example.com' }}}}},
+        { kind: 'block', type: 'iframe_hide' },
+      ],
+    });
   }
 
   if (enabledExtensions.includes('fetch')) {
-    moreContents.push(
-      { kind: 'label', text: '── Fetch ──' },
-      { kind: 'block', type: 'fetch_url', inputs: { URL: { shadow: { type: 'text', fields: { TEXT: 'https://api.example.com/data' }}}}},
-      { kind: 'block', type: 'fetch_json_field' },
-    );
+    contents.push({
+      kind: 'category',
+      name: '📡 Fetch',
+      colour: '#CF63CF',
+      contents: [
+        { kind: 'block', type: 'fetch_url', inputs: { URL: { shadow: { type: 'text', fields: { TEXT: 'https://api.example.com/data' }}}}},
+        { kind: 'block', type: 'fetch_json_field' },
+      ],
+    });
   }
-
-  // Always show the More category
-  contents.push({
-    kind: 'category',
-    name: '➕ More',
-    colour: '#7C8EA6',
-    contents: moreContents.length > 0
-      ? moreContents
-      : [{ kind: 'label', text: 'Enable extensions in the editor to add blocks here.' }],
-  });
 
   return { kind: 'categoryToolbox', contents };
 }
