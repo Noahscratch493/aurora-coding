@@ -843,6 +843,19 @@ javascriptGenerator.forBlock['flip_costume'] = function(block: Blockly.Block) {
   return `sprite.flipCostume('${dir}');\nawait runtime.tick();\n`;
 };
 
+javascriptGenerator.forBlock['set_rotation_style'] = function(block: Blockly.Block) {
+  const style = block.getFieldValue('STYLE');
+  return `sprite.setRotationStyle('${style}');\n`;
+};
+
+javascriptGenerator.forBlock['point_towards'] = function(block: Blockly.Block) {
+  const target = block.getFieldValue('TARGET');
+  if (target === '_mouse_') {
+    return `sprite.pointTowardsMouse();\nawait runtime.tick();\n`;
+  }
+  return `sprite.direction = ${target};\nawait runtime.tick();\n`;
+};
+
 javascriptGenerator.forBlock['costume_number'] = function() {
   return [`sprite.costumeNumber`, Order.ATOMIC];
 };
