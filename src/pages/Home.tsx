@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faWandMagicSparkles, faPlus, faPlay, faEye, faTrash, faSearch, faArrowRight, faStar, faUsers, faCode } from '@fortawesome/free-solid-svg-icons';
+import { faWandMagicSparkles, faPlus, faEye, faTrash, faSearch, faArrowRight, faStar, faUsers, faCode } from '@fortawesome/free-solid-svg-icons';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SharedProject {
   id: string;
@@ -11,18 +12,23 @@ interface SharedProject {
   createdAt: number;
 }
 
-function getSharedProjects(): SharedProject[] {
-  try {
-    return JSON.parse(localStorage.getItem('aurora_shared_projects') || '[]');
-  } catch { return []; }
-}
-
 export default function Home() {
   const [projects, setProjects] = useState<SharedProject[]>([]);
   const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setProjects(getSharedProjects());
+    supabase.from('shared_projects').select('id, name, author, thumbnail, created_at')
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (data) {
+          setProjects(data.map(p => ({
+            id: p.id, name: p.name, author: p.author,
+            thumbnail: p.thumbnail, createdAt: new Date(p.created_at).getTime(),
+          })));
+        }
+        setLoading(false);
+      });
   }, []);
 
   const filtered = projects.filter(p =>
@@ -30,10 +36,9 @@ export default function Home() {
     p.author.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleDelete = (id: string) => {
-    const updated = projects.filter(p => p.id !== id);
-    localStorage.setItem('aurora_shared_projects', JSON.stringify(updated));
-    setProjects(updated);
+  const handleDelete = async (id: string) => {
+    await supabase.from('shared_projects').delete().eq('id', id);
+    setProjects(prev => prev.filter(p => p.id !== id));
   };
 
   return (
@@ -102,7 +107,11 @@ export default function Home() {
             </div>
           </div>
 
-          {filtered.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-20">
+              <p className="text-muted-foreground text-sm">Loading projects...</p>
+            </div>
+          ) : filtered.length === 0 ? (
             <div className="text-center py-20">
               <FontAwesomeIcon icon={faWandMagicSparkles} className="w-12 h-12 text-muted-foreground/30 mb-4" />
               <p className="text-muted-foreground text-sm mb-2">
