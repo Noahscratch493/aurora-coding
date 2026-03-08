@@ -688,6 +688,24 @@ Blockly.Blocks['fetch_json_field'] = {
   },
 };
 
+// AI Chat
+Blockly.Blocks['ai_ask'] = {
+  init(this: Blockly.Block) {
+    this.appendValueInput('PROMPT').setCheck('String').appendField('ask AI');
+    this.setOutput(true, 'String');
+    this.setColour(350);
+  },
+};
+
+Blockly.Blocks['ai_say'] = {
+  init(this: Blockly.Block) {
+    this.appendValueInput('PROMPT').setCheck('String').appendField('ask AI and say');
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setColour(350);
+  },
+};
+
 // ---- CODE GENERATORS ----
 
 if (!javascriptGenerator.forBlock['math_number']) {
@@ -1066,6 +1084,16 @@ javascriptGenerator.forBlock['fetch_json_field'] = function(block: Blockly.Block
   const field = javascriptGenerator.valueToCode(block, 'FIELD', Order.ATOMIC) || "''";
   return [`runtime.getJsonField(${data}, ${field})`, Order.FUNCTION_CALL];
 };
+// AI Chat generators
+javascriptGenerator.forBlock['ai_ask'] = function(block: Blockly.Block) {
+  const prompt = javascriptGenerator.valueToCode(block, 'PROMPT', Order.ATOMIC) || "''";
+  return [`await runtime.askAI(${prompt})`, Order.AWAIT];
+};
+
+javascriptGenerator.forBlock['ai_say'] = function(block: Blockly.Block) {
+  const prompt = javascriptGenerator.valueToCode(block, 'PROMPT', Order.ATOMIC) || "''";
+  return `sprite.say(await runtime.askAI(${prompt}));\n`;
+};
 
 // Toolbox definition
 export function buildToolbox() {
@@ -1204,7 +1232,8 @@ export function buildToolbox() {
         { kind: 'block', type: 'fetch_json_field' },
         { kind: 'sep', gap: 12 },
         { kind: 'label', text: '🤖 AI Chat' },
-        { kind: 'block', type: 'say_message', inputs: { MSG: { shadow: { type: 'text', fields: { TEXT: 'AI Coming Soon!' }}}}},
+        { kind: 'block', type: 'ai_ask', inputs: { PROMPT: { shadow: { type: 'text', fields: { TEXT: 'Tell me a joke' }}}}},
+        { kind: 'block', type: 'ai_say', inputs: { PROMPT: { shadow: { type: 'text', fields: { TEXT: 'Tell me a fun fact' }}}}},
       ],
     },
   ];
