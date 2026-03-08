@@ -129,6 +129,56 @@
   fill: #fff !important;
 }
 
+/* Fix text input fields in blocks */
+.blocklyEditableText > rect {
+  fill: rgba(255,255,255,0.15) !important;
+  stroke: rgba(255,255,255,0.2) !important;
+  rx: 4 !important;
+}
+
+.blocklyHtmlInput {
+  color: #fff !important;
+  background: hsl(230, 25%, 20%) !important;
+  border: 1px solid hsl(230, 20%, 35%) !important;
+  border-radius: 4px !important;
+  padding: 2px 6px !important;
+  font-family: 'Space Grotesk', sans-serif !important;
+  font-size: 12px !important;
+}
+
+.blocklyDropDownDiv {
+  background-color: hsl(230, 25%, 14%) !important;
+  border: 1px solid hsl(230, 20%, 25%) !important;
+  border-radius: 8px !important;
+}
+
+.blocklyDropDownDiv .blocklyMenuItem {
+  color: #fff !important;
+}
+
+.blocklyDropDownDiv .blocklyMenuItemHighlight {
+  background-color: hsl(280, 80%, 60%, 0.3) !important;
+}
+
+.blocklyFieldTextInput {
+  color: #fff !important;
+}
+
+.blocklyWidgetDiv .blocklyMenu {
+  background: hsl(230, 25%, 14%) !important;
+  border: 1px solid hsl(230, 20%, 25%) !important;
+  border-radius: 8px !important;
+  padding: 4px !important;
+}
+
+.blocklyWidgetDiv .blocklyMenuItem .blocklyMenuItemContent {
+  color: #fff !important;
+}
+
+.blocklyWidgetDiv .blocklyMenuItemHighlight .blocklyMenuItemContent {
+  color: #fff !important;
+}
+
 .blocklyTreeLabel {
   color: hsl(var(--foreground)) !important;
   font-family: 'Space Grotesk', sans-serif !important;

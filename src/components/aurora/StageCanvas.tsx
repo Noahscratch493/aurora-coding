@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react';
-import { SpriteState, PenLine, STAGE_WIDTH, STAGE_HEIGHT } from '@/lib/aurora-runtime';
+import { SpriteState, PenLine, StageBackground, STAGE_WIDTH, STAGE_HEIGHT, getCachedImage, loadImage } from '@/lib/aurora-runtime';
 
 interface StageCanvasProps {
   sprites: SpriteState[];
   penLines: PenLine[];
+  stageBackground: StageBackground;
   onMouseMove?: (x: number, y: number) => void;
   onClick?: () => void;
 }
@@ -24,88 +25,26 @@ function drawSprite(ctx: CanvasRenderingContext2D, sprite: SpriteState) {
     ctx.filter = `hue-rotate(${sprite.colorEffect}deg)`;
   }
 
-  // Draw a cat-like sprite
-  // Body
-  ctx.fillStyle = '#FF9F43';
-  ctx.beginPath();
-  ctx.ellipse(0, 0, 18, 22, 0, 0, Math.PI * 2);
-  ctx.fill();
+  // Try to draw costume image
+  const costume = sprite.costumes[sprite.currentCostumeIndex];
+  const img = costume ? getCachedImage(costume.dataUrl) : null;
 
-  // Ears
-  ctx.beginPath();
-  ctx.moveTo(-14, -18);
-  ctx.lineTo(-8, -30);
-  ctx.lineTo(-2, -18);
-  ctx.fillStyle = '#FF9F43';
-  ctx.fill();
-  ctx.beginPath();
-  ctx.moveTo(2, -18);
-  ctx.lineTo(8, -30);
-  ctx.lineTo(14, -18);
-  ctx.fill();
-
-  // Inner ears
-  ctx.fillStyle = '#FFD89B';
-  ctx.beginPath();
-  ctx.moveTo(-12, -19);
-  ctx.lineTo(-8, -27);
-  ctx.lineTo(-4, -19);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.moveTo(4, -19);
-  ctx.lineTo(8, -27);
-  ctx.lineTo(12, -19);
-  ctx.fill();
-
-  // Eyes
-  ctx.fillStyle = '#FFF';
-  ctx.beginPath();
-  ctx.ellipse(-7, -6, 5, 6, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(7, -6, 5, 6, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Pupils
-  ctx.fillStyle = '#2D3436';
-  ctx.beginPath();
-  ctx.ellipse(-6, -5, 2.5, 3.5, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(8, -5, 2.5, 3.5, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Nose
-  ctx.fillStyle = '#FF6B81';
-  ctx.beginPath();
-  ctx.ellipse(0, 2, 3, 2, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Mouth
-  ctx.strokeStyle = '#2D3436';
-  ctx.lineWidth = 1.2;
-  ctx.beginPath();
-  ctx.moveTo(0, 4);
-  ctx.lineTo(-4, 8);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(0, 4);
-  ctx.lineTo(4, 8);
-  ctx.stroke();
-
-  // Whiskers
-  ctx.strokeStyle = '#2D3436';
-  ctx.lineWidth = 0.8;
-  [-1, 1].forEach(side => {
+  if (img) {
+    const h = 60;
+    const w = (img.width / img.height) * h;
+    ctx.drawImage(img, -w / 2, -h / 2, w, h);
+  } else {
+    // Fallback: simple circle
+    ctx.fillStyle = '#FF9F43';
     ctx.beginPath();
-    ctx.moveTo(side * 10, 0);
-    ctx.lineTo(side * 22, -4);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(side * 10, 2);
-    ctx.lineTo(side * 22, 4);
-    ctx.stroke();
-  });
+    ctx.arc(0, 0, 20, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('?', 0, 0);
+  }
 
   ctx.filter = 'none';
   ctx.restore();
@@ -130,7 +69,6 @@ function drawSprite(ctx: CanvasRenderingContext2D, sprite: SpriteState) {
     ctx.fill();
     ctx.stroke();
 
-    // Tail
     if (isThink) {
       ctx.beginPath();
       ctx.arc(bx + 6, by + ph + 5, 4, 0, Math.PI * 2);
@@ -156,8 +94,13 @@ function drawSprite(ctx: CanvasRenderingContext2D, sprite: SpriteState) {
   }
 }
 
-export default function StageCanvas({ sprites, penLines, onMouseMove, onClick }: StageCanvasProps) {
+export default function StageCanvas({ sprites, penLines, stageBackground, onMouseMove, onClick }: StageCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Preload all costume images
+  useEffect(() => {
+    sprites.forEach(s => s.costumes.forEach(c => loadImage(c.dataUrl).catch(() => {})));
+  }, [sprites]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -165,9 +108,20 @@ export default function StageCanvas({ sprites, penLines, onMouseMove, onClick }:
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Clear
-    ctx.fillStyle = '#1a1a2e';
-    ctx.fillRect(0, 0, STAGE_WIDTH, STAGE_HEIGHT);
+    // Background
+    if (stageBackground.type === 'image') {
+      const bgImg = getCachedImage(stageBackground.value);
+      if (bgImg) {
+        ctx.drawImage(bgImg, 0, 0, STAGE_WIDTH, STAGE_HEIGHT);
+      } else {
+        ctx.fillStyle = '#1a1a2e';
+        ctx.fillRect(0, 0, STAGE_WIDTH, STAGE_HEIGHT);
+        loadImage(stageBackground.value).then(() => {});
+      }
+    } else {
+      ctx.fillStyle = stageBackground.value;
+      ctx.fillRect(0, 0, STAGE_WIDTH, STAGE_HEIGHT);
+    }
 
     // Grid dots
     ctx.fillStyle = 'rgba(255,255,255,0.04)';
@@ -206,7 +160,7 @@ export default function StageCanvas({ sprites, penLines, onMouseMove, onClick }:
     for (const sprite of sprites) {
       drawSprite(ctx, sprite);
     }
-  }, [sprites, penLines]);
+  }, [sprites, penLines, stageBackground]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
