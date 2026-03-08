@@ -551,7 +551,7 @@ Blockly.Blocks['set_pen_color'] = {
   init(this: Blockly.Block) {
     this.appendDummyInput()
       .appendField('set pen color to')
-      .appendField(new Blockly.FieldColour('#ff0000'), 'COLOR');
+      .appendField(new (Blockly as any).FieldColour('#ff0000'), 'COLOR');
     this.setPreviousStatement(true, null);
     this.setNextStatement(true, null);
     this.setColour(150);
