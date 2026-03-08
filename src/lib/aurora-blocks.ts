@@ -688,6 +688,24 @@ Blockly.Blocks['fetch_json_field'] = {
   },
 };
 
+// AI Chat
+Blockly.Blocks['ai_ask'] = {
+  init(this: Blockly.Block) {
+    this.appendValueInput('PROMPT').setCheck('String').appendField('ask AI');
+    this.setOutput(true, 'String');
+    this.setColour(350);
+  },
+};
+
+Blockly.Blocks['ai_say'] = {
+  init(this: Blockly.Block) {
+    this.appendValueInput('PROMPT').setCheck('String').appendField('ask AI and say');
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setColour(350);
+  },
+};
+
 // ---- CODE GENERATORS ----
 
 if (!javascriptGenerator.forBlock['math_number']) {
