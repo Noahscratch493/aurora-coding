@@ -1,8 +1,9 @@
 import { useCallback, useRef, useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import * as Blockly from 'blockly';
 import { javascriptGenerator } from 'blockly/javascript';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faWandMagicSparkles, faCubes, faCode, faPuzzlePiece, faPalette, faImage } from '@fortawesome/free-solid-svg-icons';
+import { faWandMagicSparkles, faCubes, faCode, faPuzzlePiece, faPalette, faImage, faHouse, faEye, faTrash, faUpload } from '@fortawesome/free-solid-svg-icons';
 import BlocklyEditor from '@/components/aurora/BlocklyEditor';
 import StageCanvas from '@/components/aurora/StageCanvas';
 import SpritePanel from '@/components/aurora/SpritePanel';
@@ -14,8 +15,43 @@ import PythonEditor from '@/components/aurora/PythonEditor';
 import ExtensionsDialog, { Extension, AVAILABLE_EXTENSIONS } from '@/components/aurora/ExtensionsDialog';
 import { AuroraRuntime, createDefaultSprite, SpriteState } from '@/lib/aurora-runtime';
 import { buildToolbox } from '@/lib/aurora-blocks';
+import { Link } from 'react-router-dom';
+
+// Cookie-based custom background storage
+function getSavedBackgrounds(): string[] {
+  try {
+    return JSON.parse(localStorage.getItem('aurora_custom_bgs') || '[]');
+  } catch { return []; }
+}
+function saveBgToCookie(dataUrl: string) {
+  const bgs = getSavedBackgrounds();
+  bgs.push(dataUrl);
+  localStorage.setItem('aurora_custom_bgs', JSON.stringify(bgs));
+}
+function removeSavedBg(index: number) {
+  const bgs = getSavedBackgrounds();
+  bgs.splice(index, 1);
+  localStorage.setItem('aurora_custom_bgs', JSON.stringify(bgs));
+}
+
+// Shared project storage
+interface SharedProject {
+  id: string; name: string; author: string; thumbnail: string; data: string; createdAt: number;
+}
+function getSharedProjects(): SharedProject[] {
+  try { return JSON.parse(localStorage.getItem('aurora_shared_projects') || '[]'); } catch { return []; }
+}
+function saveSharedProject(project: SharedProject) {
+  const projects = getSharedProjects();
+  const idx = projects.findIndex(p => p.id === project.id);
+  if (idx >= 0) projects[idx] = project;
+  else projects.push(project);
+  localStorage.setItem('aurora_shared_projects', JSON.stringify(projects));
+}
 
 export default function Index() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [renderKey, setRenderKey] = useState(0);
   const runtimeRef = useRef<AuroraRuntime | null>(null);
   const workspaceRef = useRef<Blockly.WorkspaceSvg | null>(null);
@@ -26,7 +62,12 @@ export default function Index() {
   const [showHowToCode, setShowHowToCode] = useState(false);
   const [showExtensions, setShowExtensions] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+  const [shareName, setShareName] = useState('My Project');
+  const [shareAuthor, setShareAuthor] = useState('');
+  const [sharedProjectId, setSharedProjectId] = useState<string | null>(null);
   const [extensions, setExtensions] = useState<Extension[]>([...AVAILABLE_EXTENSIONS]);
+  const [customBgs, setCustomBgs] = useState<string[]>(getSavedBackgrounds());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bgInputRef = useRef<HTMLInputElement>(null);
 
@@ -36,6 +77,30 @@ export default function Index() {
 
   const runtime = runtimeRef.current;
   const currentSprite = runtime.sprites.find(s => s.id === selectedSpriteId) || runtime.sprites[0];
+
+  // Load project from URL param
+  useEffect(() => {
+    const loadId = searchParams.get('load');
+    if (loadId) {
+      try {
+        const projects: SharedProject[] = JSON.parse(localStorage.getItem('aurora_shared_projects') || '[]');
+        const p = projects.find(proj => proj.id === loadId);
+        if (p?.data) {
+          const workspaceXml = runtime.loadAurFile(p.data);
+          if (workspaceXml && workspaceRef.current) {
+            workspaceRef.current.clear();
+            const dom = Blockly.utils.xml.textToDom(workspaceXml);
+            Blockly.Xml.domToWorkspace(dom, workspaceRef.current);
+          }
+          if (runtime.sprites.length > 0) setSelectedSpriteId(runtime.sprites[0].id);
+          setSharedProjectId(loadId);
+          setShareName(p.name);
+          setShareAuthor(p.author);
+          setRenderKey(n => n + 1);
+        }
+      } catch {}
+    }
+  }, [searchParams, runtime]);
 
   // Update toolbox when extensions change
   useEffect(() => {
@@ -52,10 +117,7 @@ export default function Index() {
     const onKeyUp = (e: KeyboardEvent) => runtime.handleKeyUp(e.key);
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
-    return () => {
-      window.removeEventListener('keydown', onKeyDown);
-      window.removeEventListener('keyup', onKeyUp);
-    };
+    return () => { window.removeEventListener('keydown', onKeyDown); window.removeEventListener('keyup', onKeyUp); };
   }, [runtime]);
 
   const handleRun = useCallback(() => {
@@ -92,6 +154,7 @@ export default function Index() {
     if (confirm('Create a new project? Unsaved changes will be lost.')) {
       handleReset();
       if (workspaceRef.current) workspaceRef.current.clear();
+      setSharedProjectId(null);
     }
   }, [handleReset]);
 
@@ -104,9 +167,9 @@ export default function Index() {
     const data = runtime.toAurFile(workspaceXml);
     const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'project.aur'; a.click();
+    const a = document.createElement('a'); a.href = url; a.download = `${shareName || 'project'}.aur`; a.click();
     URL.revokeObjectURL(url);
-  }, [runtime]);
+  }, [runtime, shareName]);
 
   const handleLoad = useCallback(() => { fileInputRef.current?.click(); }, []);
 
@@ -156,7 +219,13 @@ export default function Index() {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => { runtime.stageBackground = { type: 'image', value: reader.result as string }; setRenderKey(n => n + 1); };
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      runtime.stageBackground = { type: 'image', value: dataUrl };
+      saveBgToCookie(dataUrl);
+      setCustomBgs(getSavedBackgrounds());
+      setRenderKey(n => n + 1);
+    };
     reader.readAsDataURL(file);
     e.target.value = '';
   }, [runtime]);
@@ -165,11 +234,53 @@ export default function Index() {
     runtime.stageBackground = { type: 'color', value: color }; setRenderKey(n => n + 1);
   }, [runtime]);
 
+  const handleDeleteCustomBg = useCallback((index: number) => {
+    removeSavedBg(index);
+    setCustomBgs(getSavedBackgrounds());
+  }, []);
+
+  const handleUseCustomBg = useCallback((dataUrl: string) => {
+    runtime.stageBackground = { type: 'image', value: dataUrl };
+    setRenderKey(n => n + 1);
+  }, [runtime]);
+
+  // Get canvas thumbnail for sharing
+  const getCanvasThumbnail = useCallback((): string => {
+    const canvas = document.querySelector('canvas');
+    if (canvas) {
+      try { return canvas.toDataURL('image/png'); } catch { return ''; }
+    }
+    return '';
+  }, []);
+
+  const handleShare = useCallback(() => {
+    let workspaceXml = '';
+    if (workspaceRef.current) {
+      const dom = Blockly.Xml.workspaceToDom(workspaceRef.current);
+      workspaceXml = Blockly.Xml.domToText(dom);
+    }
+    const data = runtime.toAurFile(workspaceXml);
+    const id = sharedProjectId || `proj_${Date.now()}`;
+    const thumbnail = getCanvasThumbnail();
+    const project: SharedProject = {
+      id, name: shareName || 'Untitled', author: shareAuthor || 'Anonymous',
+      thumbnail, data, createdAt: Date.now(),
+    };
+    saveSharedProject(project);
+    setSharedProjectId(id);
+    setShowShare(false);
+    alert('Project shared! You can find it on the homepage.');
+  }, [runtime, shareName, shareAuthor, sharedProjectId, getCanvasThumbnail]);
+
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden">
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-1.5 border-b border-border aurora-gradient">
         <div className="flex items-center gap-3">
+          <Link to="/" className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-muted transition-colors" title="Home">
+            <FontAwesomeIcon icon={faHouse} className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+          </Link>
+          <div className="h-4 w-px bg-border" />
           <div className="flex items-center gap-2">
             <FontAwesomeIcon icon={faWandMagicSparkles} className="w-5 h-5 text-primary" />
             <h1 className="text-base font-bold tracking-tight text-foreground">Aurora</h1>
@@ -180,7 +291,16 @@ export default function Index() {
             onNew={handleNew} onSave={handleSave} onLoad={handleLoad}
             onUndo={handleUndo} onRedo={handleRedo}
             onAbout={() => setShowAbout(true)} onHowToCode={() => setShowHowToCode(true)}
+            onShare={() => setShowShare(true)}
           />
+        </div>
+        <div className="flex items-center gap-2">
+          {sharedProjectId && (
+            <Link to={`/project/${sharedProjectId}`}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-accent/20 text-accent hover:bg-accent/30 transition-colors">
+              <FontAwesomeIcon icon={faEye} className="w-3 h-3" /> See Project Page
+            </Link>
+          )}
         </div>
       </header>
 
@@ -230,7 +350,6 @@ export default function Index() {
               <div className="p-3 flex-shrink-0 relative">
                 <StageCanvas sprites={runtime.sprites} penLines={runtime.penLines} stageBackground={runtime.stageBackground}
                   renderKey={renderKey} onMouseMove={(x, y) => runtime.handleMouseMove(x, y)} />
-                {/* Iframe overlay */}
                 {runtime.iframeVisible && runtime.iframeUrl && (
                   <iframe src={runtime.iframeUrl} className="absolute inset-3 w-[calc(100%-24px)] h-[calc(100%-24px)] rounded-lg border-0" />
                 )}
@@ -264,7 +383,7 @@ export default function Index() {
 
           {rightTab === 'backgrounds' && (
             <div className="p-3 flex-1 overflow-auto space-y-3">
-              <h3 className="text-xs font-semibold text-foreground">Stage Background</h3>
+              <h3 className="text-xs font-semibold text-foreground">Preset Colors</h3>
               <div className="grid grid-cols-4 gap-2">
                 {['#1a1a2e', '#0f0f23', '#1e3a5f', '#2d1b69', '#1a3c2e', '#3c1a1a', '#2e2e2e', '#f0f0f0'].map(color => (
                   <button key={color} onClick={() => handleBgColor(color)}
@@ -274,10 +393,31 @@ export default function Index() {
                     style={{ backgroundColor: color }} />
                 ))}
               </div>
+
               <button onClick={() => bgInputRef.current?.click()}
                 className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border-2 border-dashed border-border hover:border-primary/50 text-xs text-muted-foreground hover:text-foreground transition-all">
-                <FontAwesomeIcon icon={faImage} className="w-3 h-3" /> Upload Background Image
+                <FontAwesomeIcon icon={faUpload} className="w-3 h-3" /> Upload Background Image
               </button>
+
+              {customBgs.length > 0 && (
+                <>
+                  <h3 className="text-xs font-semibold text-foreground mt-4">Custom Backgrounds</h3>
+                  <div className="grid grid-cols-3 gap-2">
+                    {customBgs.map((bg, i) => (
+                      <div key={i} className="relative group aspect-[4/3] rounded-lg overflow-hidden border border-border hover:border-primary/50 transition-all cursor-pointer"
+                        onClick={() => handleUseCustomBg(bg)}>
+                        <img src={bg} alt={`Custom ${i + 1}`} className="w-full h-full object-cover" />
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDeleteCustomBg(i); }}
+                          className="absolute top-1 right-1 w-5 h-5 rounded bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <FontAwesomeIcon icon={faTrash} className="w-2.5 h-2.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+
               <input ref={bgInputRef} type="file" accept="image/*" onChange={handleBgUpload} className="hidden" />
             </div>
           )}
@@ -288,6 +428,34 @@ export default function Index() {
 
       {showHowToCode && <HowToCode onClose={() => setShowHowToCode(false)} />}
       {showExtensions && <ExtensionsDialog extensions={extensions} onToggle={handleToggleExtension} onClose={() => setShowExtensions(false)} />}
+
+      {/* Share Dialog */}
+      {showShare && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-card border border-border rounded-xl shadow-2xl w-[400px] p-6">
+            <h2 className="text-lg font-bold text-foreground mb-4">Share Project</h2>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Project Name</label>
+                <input type="text" value={shareName} onChange={e => setShareName(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Author Name</label>
+                <input type="text" value={shareAuthor} onChange={e => setShareAuthor(e.target.value)} placeholder="Your name"
+                  className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+              </div>
+            </div>
+            <div className="flex gap-2 mt-5">
+              <button onClick={() => setShowShare(false)}
+                className="flex-1 px-4 py-2 rounded-md text-xs font-medium bg-muted text-muted-foreground hover:text-foreground transition-colors">Cancel</button>
+              <button onClick={handleShare}
+                className="flex-1 px-4 py-2 rounded-md text-xs font-medium bg-primary text-primary-foreground hover:opacity-90 transition-colors">Share</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showAbout && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-card border border-border rounded-xl shadow-2xl w-[400px] p-6 text-center">

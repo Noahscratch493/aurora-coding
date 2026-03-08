@@ -18,9 +18,10 @@ interface HeaderMenuBarProps {
   onRedo: () => void;
   onAbout: () => void;
   onHowToCode: () => void;
+  onShare?: () => void;
 }
 
-export default function HeaderMenuBar({ onNew, onSave, onLoad, onUndo, onRedo, onAbout, onHowToCode }: HeaderMenuBarProps) {
+export default function HeaderMenuBar({ onNew, onSave, onLoad, onUndo, onRedo, onAbout, onHowToCode, onShare }: HeaderMenuBarProps) {
   return (
     <Menubar className="border-none bg-transparent h-auto p-0 gap-0">
       <MenubarMenu>
@@ -44,10 +45,9 @@ export default function HeaderMenuBar({ onNew, onSave, onLoad, onUndo, onRedo, o
             <MenubarShortcut>⌘O</MenubarShortcut>
           </MenubarItem>
           <MenubarSeparator />
-          <MenubarItem disabled className="text-xs gap-2 opacity-50">
+          <MenubarItem onClick={onShare} className="text-xs gap-2 cursor-pointer">
             <FontAwesomeIcon icon={faShareNodes} className="w-3 h-3 text-muted-foreground" />
             Share
-            <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">Coming Soon</span>
           </MenubarItem>
         </MenubarContent>
       </MenubarMenu>
