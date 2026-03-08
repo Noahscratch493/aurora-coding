@@ -1109,6 +1109,8 @@ export function buildToolbox(enabledExtensions: string[] = []) {
         { kind: 'block', type: 'change_y', inputs: { DY: { shadow: { type: 'math_number', fields: { NUM: 10 }}}}},
         { kind: 'block', type: 'point_direction', inputs: { DIR: { shadow: { type: 'math_number', fields: { NUM: 90 }}}}},
         { kind: 'block', type: 'bounce_edge' },
+        { kind: 'block', type: 'point_towards' },
+        { kind: 'block', type: 'set_rotation_style' },
         { kind: 'block', type: 'set_draggable' },
         { kind: 'sep', gap: 16 },
         { kind: 'block', type: 'x_position' },
