@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faWandMagicSparkles, faPlay, faStop, faArrowLeft, faCode, faPencil, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faWandMagicSparkles, faPlay, faStop, faArrowLeft, faCode } from '@fortawesome/free-solid-svg-icons';
 import * as Blockly from 'blockly';
 import { javascriptGenerator } from 'blockly/javascript';
 import StageCanvas from '@/components/aurora/StageCanvas';
@@ -47,6 +47,18 @@ export default function ProjectPage() {
     }
   }, [id, runtime]);
 
+  // Wire up keyboard events so projects can accept input
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => runtime.handleKeyDown(e.key);
+    const onKeyUp = (e: KeyboardEvent) => runtime.handleKeyUp(e.key);
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+    };
+  }, [runtime]);
+
   const handleRun = useCallback(() => {
     if (!project?.data) return;
     try {
@@ -75,6 +87,14 @@ export default function ProjectPage() {
   const handleStop = useCallback(() => {
     runtime.stopAll();
     setIsRunning(false);
+  }, [runtime]);
+
+  const handleMouseDown = useCallback((x: number, y: number) => {
+    runtime.handleMouseDown(x, y);
+  }, [runtime]);
+
+  const handleMouseUp = useCallback(() => {
+    runtime.handleMouseUp();
   }, [runtime]);
 
   if (!project) {
@@ -116,15 +136,17 @@ export default function ProjectPage() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-border overflow-hidden bg-card">
+        <div className="rounded-xl border border-border overflow-hidden bg-card" onMouseUp={handleMouseUp}>
           <div className="p-4 flex justify-center">
-            <div className="relative">
+            <div className="relative" tabIndex={0}>
               <StageCanvas
                 sprites={runtime.sprites}
                 penLines={runtime.penLines}
                 stageBackground={runtime.stageBackground}
                 renderKey={renderKey}
                 onMouseMove={(x, y) => runtime.handleMouseMove(x, y)}
+                onMouseDown={handleMouseDown}
+                onMouseUp={handleMouseUp}
               />
             </div>
           </div>

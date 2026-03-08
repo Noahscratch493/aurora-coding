@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import * as Blockly from 'blockly';
 import { javascriptGenerator } from 'blockly/javascript';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faWandMagicSparkles, faCubes, faCode, faPuzzlePiece, faPalette, faImage, faHouse, faEye, faTrash, faUpload } from '@fortawesome/free-solid-svg-icons';
+import { faWandMagicSparkles, faCubes, faCode, faPalette, faImage, faHouse, faEye, faTrash, faUpload } from '@fortawesome/free-solid-svg-icons';
 import BlocklyEditor from '@/components/aurora/BlocklyEditor';
 import StageCanvas from '@/components/aurora/StageCanvas';
 import SpritePanel from '@/components/aurora/SpritePanel';
@@ -12,7 +12,6 @@ import HeaderMenuBar from '@/components/aurora/HeaderMenuBar';
 import HowToCode from '@/components/aurora/HowToCode';
 import CostumeEditor from '@/components/aurora/CostumeEditor';
 import PythonEditor from '@/components/aurora/PythonEditor';
-import ExtensionsDialog, { Extension, AVAILABLE_EXTENSIONS } from '@/components/aurora/ExtensionsDialog';
 import { AuroraRuntime, createDefaultSprite, SpriteState } from '@/lib/aurora-runtime';
 import { buildToolbox } from '@/lib/aurora-blocks';
 import { Link } from 'react-router-dom';
@@ -49,6 +48,9 @@ function saveSharedProject(project: SharedProject) {
   localStorage.setItem('aurora_shared_projects', JSON.stringify(projects));
 }
 
+// Extension state
+interface ExtState { iframe: boolean; fetch: boolean; }
+
 export default function Index() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -60,13 +62,12 @@ export default function Index() {
   const [editorTab, setEditorTab] = useState<'blocks' | 'python'>('blocks');
   const [rightTab, setRightTab] = useState<'stage' | 'costumes' | 'backgrounds'>('stage');
   const [showHowToCode, setShowHowToCode] = useState(false);
-  const [showExtensions, setShowExtensions] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [shareName, setShareName] = useState('My Project');
   const [shareAuthor, setShareAuthor] = useState('');
   const [sharedProjectId, setSharedProjectId] = useState<string | null>(null);
-  const [extensions, setExtensions] = useState<Extension[]>([...AVAILABLE_EXTENSIONS]);
+  const [extensions, setExtensions] = useState<ExtState>({ iframe: false, fetch: false });
   const [customBgs, setCustomBgs] = useState<string[]>(getSavedBackgrounds());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bgInputRef = useRef<HTMLInputElement>(null);
@@ -105,8 +106,10 @@ export default function Index() {
   // Update toolbox when extensions change
   useEffect(() => {
     if (workspaceRef.current) {
-      const enabledExts = extensions.filter(e => e.enabled).map(e => e.id);
-      const toolbox = buildToolbox(enabledExts);
+      const enabled: string[] = [];
+      if (extensions.iframe) enabled.push('iframe');
+      if (extensions.fetch) enabled.push('fetch');
+      const toolbox = buildToolbox(enabled);
       workspaceRef.current.updateToolbox(toolbox as any);
     }
   }, [extensions]);
@@ -211,10 +214,6 @@ export default function Index() {
     if (idx >= 0) { runtime.sprites[idx] = updated; setRenderKey(n => n + 1); }
   }, [runtime]);
 
-  const handleToggleExtension = useCallback((id: string) => {
-    setExtensions(prev => prev.map(ext => ext.id === id ? { ...ext, enabled: !ext.enabled } : ext));
-  }, []);
-
   const handleBgUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -244,7 +243,6 @@ export default function Index() {
     setRenderKey(n => n + 1);
   }, [runtime]);
 
-  // Get canvas thumbnail for sharing
   const getCanvasThumbnail = useCallback((): string => {
     const canvas = document.querySelector('canvas');
     if (canvas) {
@@ -271,6 +269,14 @@ export default function Index() {
     setShowShare(false);
     alert('Project shared! You can find it on the homepage.');
   }, [runtime, shareName, shareAuthor, sharedProjectId, getCanvasThumbnail]);
+
+  const handleMouseDown = useCallback((x: number, y: number) => {
+    runtime.handleMouseDown(x, y);
+  }, [runtime]);
+
+  const handleMouseUp = useCallback(() => {
+    runtime.handleMouseUp();
+  }, [runtime]);
 
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden">
@@ -318,10 +324,18 @@ export default function Index() {
               <FontAwesomeIcon icon={faCode} className="w-3 h-3" /> Python
             </button>
             <div className="flex-1" />
-            <button onClick={() => setShowExtensions(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-              <FontAwesomeIcon icon={faPuzzlePiece} className="w-3 h-3" /> Extensions
-            </button>
+            {/* Extension toggles inline */}
+            <div className="flex items-center gap-1 mr-2">
+              <span className="text-[10px] text-muted-foreground mr-1">Ext:</span>
+              {(['iframe', 'fetch'] as const).map(ext => (
+                <button key={ext} onClick={() => setExtensions(prev => ({ ...prev, [ext]: !prev[ext] }))}
+                  className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
+                    extensions[ext] ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground hover:text-foreground'
+                  }`}>
+                  {ext.charAt(0).toUpperCase() + ext.slice(1)}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="flex-1 min-h-0">
             {editorTab === 'blocks' ? <BlocklyEditor workspaceRef={workspaceRef} /> : <PythonEditor onRun={handleRunPython} isRunning={isRunning} />}
@@ -349,7 +363,8 @@ export default function Index() {
             <>
               <div className="p-3 flex-shrink-0 relative">
                 <StageCanvas sprites={runtime.sprites} penLines={runtime.penLines} stageBackground={runtime.stageBackground}
-                  renderKey={renderKey} onMouseMove={(x, y) => runtime.handleMouseMove(x, y)} />
+                  renderKey={renderKey} onMouseMove={(x, y) => runtime.handleMouseMove(x, y)}
+                  onMouseDown={handleMouseDown} onMouseUp={handleMouseUp} />
                 {runtime.iframeVisible && runtime.iframeUrl && (
                   <iframe src={runtime.iframeUrl} className="absolute inset-3 w-[calc(100%-24px)] h-[calc(100%-24px)] rounded-lg border-0" />
                 )}
@@ -427,7 +442,6 @@ export default function Index() {
       <input ref={fileInputRef} type="file" accept=".aur,.json" onChange={handleFileLoad} className="hidden" />
 
       {showHowToCode && <HowToCode onClose={() => setShowHowToCode(false)} />}
-      {showExtensions && <ExtensionsDialog extensions={extensions} onToggle={handleToggleExtension} onClose={() => setShowExtensions(false)} />}
 
       {/* Share Dialog */}
       {showShare && (
