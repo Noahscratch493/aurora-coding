@@ -70,21 +70,6 @@ export default function HeaderMenuBar({ onNew, onSave, onLoad, onUndo, onRedo, o
         </MenubarContent>
       </MenubarMenu>
 
-      <MenubarMenu>
-        <MenubarTrigger className="text-xs font-medium px-3 py-1 text-foreground/80 hover:text-foreground cursor-pointer data-[state=open]:bg-muted rounded-md">
-          Help
-        </MenubarTrigger>
-        <MenubarContent className="bg-card border-border">
-          <MenubarItem onClick={onAbout} className="text-xs gap-2 cursor-pointer">
-            <FontAwesomeIcon icon={faCircleQuestion} className="w-3 h-3 text-muted-foreground" />
-            About Aurora
-          </MenubarItem>
-          <MenubarItem onClick={onHowToCode} className="text-xs gap-2 cursor-pointer">
-            <FontAwesomeIcon icon={faCode} className="w-3 h-3 text-muted-foreground" />
-            How to Code
-          </MenubarItem>
-        </MenubarContent>
-      </MenubarMenu>
     </Menubar>
   );
 }
