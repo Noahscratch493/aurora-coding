@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import * as Blockly from 'blockly';
 import { javascriptGenerator } from 'blockly/javascript';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faWandMagicSparkles, faCubes, faCode, faPalette, faImage, faHouse, faEye, faTrash, faUpload } from '@fortawesome/free-solid-svg-icons';
+import { faWandMagicSparkles, faCubes, faPalette, faImage, faHouse, faEye, faTrash, faUpload, faPuzzlePiece, faGlobe, faDownload, faRobot, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import BlocklyEditor from '@/components/aurora/BlocklyEditor';
 import StageCanvas from '@/components/aurora/StageCanvas';
 import SpritePanel from '@/components/aurora/SpritePanel';
@@ -11,7 +11,6 @@ import Toolbar from '@/components/aurora/Toolbar';
 import HeaderMenuBar from '@/components/aurora/HeaderMenuBar';
 import HowToCode from '@/components/aurora/HowToCode';
 import CostumeEditor from '@/components/aurora/CostumeEditor';
-import PythonEditor from '@/components/aurora/PythonEditor';
 import { AuroraRuntime, createDefaultSprite, SpriteState } from '@/lib/aurora-runtime';
 import { buildToolbox } from '@/lib/aurora-blocks';
 import { Link } from 'react-router-dom';
@@ -49,7 +48,13 @@ function saveSharedProject(project: SharedProject) {
 }
 
 // Extension state
-interface ExtState { iframe: boolean; fetch: boolean; }
+interface ExtState { iframe: boolean; fetch: boolean; ai: boolean; }
+
+const EXTENSIONS = [
+  { id: 'iframe' as const, name: 'Iframe', description: 'Embed web pages in the stage. Play URLs and toggle iframe visibility with blocks.', icon: faGlobe, color: '#5B80A5' },
+  { id: 'fetch' as const, name: 'Fetch', description: 'Make HTTP requests to fetch data from URLs. Parse JSON responses in your projects.', icon: faDownload, color: '#CF63CF' },
+  { id: 'ai' as const, name: 'AI', description: 'Connect to AI models to generate text, answer questions, and more. (Coming Soon)', icon: faRobot, color: '#FF6680' },
+];
 
 export default function Index() {
   const navigate = useNavigate();
@@ -59,7 +64,7 @@ export default function Index() {
   const workspaceRef = useRef<Blockly.WorkspaceSvg | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [selectedSpriteId, setSelectedSpriteId] = useState('sprite1');
-  const [editorTab, setEditorTab] = useState<'blocks' | 'python'>('blocks');
+  const [editorTab, setEditorTab] = useState<'blocks' | 'extensions'>('blocks');
   const [rightTab, setRightTab] = useState<'stage' | 'costumes' | 'backgrounds'>('stage');
   const [showHowToCode, setShowHowToCode] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
@@ -67,7 +72,7 @@ export default function Index() {
   const [shareName, setShareName] = useState('My Project');
   const [shareAuthor, setShareAuthor] = useState('');
   const [sharedProjectId, setSharedProjectId] = useState<string | null>(null);
-  const [extensions, setExtensions] = useState<ExtState>({ iframe: false, fetch: false });
+  const [extensions, setExtensions] = useState<ExtState>({ iframe: false, fetch: false, ai: false });
   const [customBgs, setCustomBgs] = useState<string[]>(getSavedBackgrounds());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bgInputRef = useRef<HTMLInputElement>(null);
@@ -109,6 +114,7 @@ export default function Index() {
       const enabled: string[] = [];
       if (extensions.iframe) enabled.push('iframe');
       if (extensions.fetch) enabled.push('fetch');
+      if (extensions.ai) enabled.push('ai');
       const toolbox = buildToolbox(enabled);
       workspaceRef.current.updateToolbox(toolbox as any);
     }
@@ -137,11 +143,6 @@ export default function Index() {
     }
   }, [runtime, currentSprite]);
 
-  const handleRunPython = useCallback((jsCode: string) => {
-    runtime.start();
-    setIsRunning(true);
-    runtime.executeCode(jsCode, currentSprite).then(() => setIsRunning(false)).catch(() => setIsRunning(false));
-  }, [runtime, currentSprite]);
 
   const handleStop = useCallback(() => { runtime.stopAll(); setIsRunning(false); }, [runtime]);
 
@@ -314,37 +315,62 @@ export default function Index() {
       <div className="flex flex-1 overflow-hidden">
         {/* Left: Editor area */}
         <div className="flex-1 min-w-0 flex flex-col">
-          <div className="flex items-center border-b border-border bg-card px-2">
-            <button onClick={() => setEditorTab('blocks')}
-              className={`flex items-center gap-1.5 px-4 py-2 text-xs font-medium transition-colors border-b-2 ${editorTab === 'blocks' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
-              <FontAwesomeIcon icon={faCubes} className="w-3 h-3" /> Blocks
-            </button>
-            <button onClick={() => setEditorTab('python')}
-              className={`flex items-center gap-1.5 px-4 py-2 text-xs font-medium transition-colors border-b-2 ${editorTab === 'python' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
-              <FontAwesomeIcon icon={faCode} className="w-3 h-3" /> Python
-            </button>
-            <div className="flex-1" />
-            {/* Extension toggles inline */}
-            <div className="flex items-center gap-1 mr-2">
-              <span className="text-[10px] text-muted-foreground mr-1">Ext:</span>
-              {(['iframe', 'fetch'] as const).map(ext => (
-                <button key={ext} onClick={() => setExtensions(prev => ({ ...prev, [ext]: !prev[ext] }))}
-                  className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
-                    extensions[ext] ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground hover:text-foreground'
-                  }`}>
-                  {ext.charAt(0).toUpperCase() + ext.slice(1)}
+          {editorTab === 'extensions' ? (
+            <div className="flex flex-col h-full">
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-card">
+                <button onClick={() => setEditorTab('blocks')} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                  <FontAwesomeIcon icon={faArrowLeft} className="w-3 h-3" /> Back to Blocks
                 </button>
-              ))}
+                <div className="flex-1" />
+                <h2 className="text-sm font-bold text-foreground">Extension Library</h2>
+                <div className="flex-1" />
+              </div>
+              <div className="flex-1 overflow-auto p-6">
+                <p className="text-xs text-muted-foreground mb-6">Enable extensions to add new block categories to your toolbox.</p>
+                <div className="grid grid-cols-1 gap-4">
+                  {EXTENSIONS.map(ext => (
+                    <div key={ext.id} className="flex items-center gap-4 p-4 rounded-xl border border-border bg-card hover:border-primary/30 transition-all">
+                      <div className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: ext.color + '22' }}>
+                        <FontAwesomeIcon icon={ext.icon} className="w-7 h-7" style={{ color: ext.color }} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-bold text-foreground">{ext.name}</h3>
+                        <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">{ext.description}</p>
+                      </div>
+                      <button
+                        onClick={() => setExtensions(prev => ({ ...prev, [ext.id]: !prev[ext.id] }))}
+                        className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+                          extensions[ext.id]
+                            ? 'bg-destructive/20 text-destructive hover:bg-destructive/30'
+                            : 'bg-primary text-primary-foreground hover:opacity-90'
+                        }`}>
+                        {extensions[ext.id] ? 'Remove' : 'Add'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="flex-1 min-h-0">
-            {editorTab === 'blocks' ? <BlocklyEditor workspaceRef={workspaceRef} /> : <PythonEditor onRun={handleRunPython} isRunning={isRunning} />}
-          </div>
+          ) : (
+            <>
+              <div className="flex-1 min-h-0 relative">
+                <BlocklyEditor workspaceRef={workspaceRef} />
+                {/* Extensions button at bottom of palette */}
+                <button
+                  onClick={() => setEditorTab('extensions')}
+                  className="absolute bottom-3 left-3 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-card border border-border shadow-lg text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-primary/50 transition-all z-10"
+                >
+                  <FontAwesomeIcon icon={faPuzzlePiece} className="w-4 h-4 text-primary" />
+                  Extensions
+                </button>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Right panel */}
         <div className="w-[480px] flex flex-col border-l border-border bg-card">
-          <Toolbar isRunning={isRunning} onRun={editorTab === 'blocks' ? handleRun : () => {}} onStop={handleStop} onReset={handleReset}
+          <Toolbar isRunning={isRunning} onRun={handleRun} onStop={handleStop} onReset={handleReset}
             spriteX={currentSprite.x} spriteY={currentSprite.y} spriteDirection={currentSprite.direction} />
 
           <div className="flex border-b border-border px-2">
