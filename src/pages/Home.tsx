@@ -77,7 +77,7 @@ export default function Home() {
             </div>
             <div className="flex items-center gap-2">
               <FontAwesomeIcon icon={faCode} className="w-4 h-4 text-accent" />
-              <span>Blocks &amp; Python</span>
+              <span>Blocks</span>
             </div>
             <div className="flex items-center gap-2">
               <FontAwesomeIcon icon={faUsers} className="w-4 h-4 text-secondary" />
