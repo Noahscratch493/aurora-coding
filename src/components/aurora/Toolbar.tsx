@@ -1,4 +1,5 @@
-import { Play, Square, Flag, Maximize2, RotateCcw } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlay, faStop, faRotateLeft, faFlag, faExpand } from '@fortawesome/free-solid-svg-icons';
 
 interface ToolbarProps {
   isRunning: boolean;
@@ -19,7 +20,7 @@ export default function Toolbar({ isRunning, onRun, onStop, onReset, spriteX, sp
           disabled={isRunning}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-md font-medium text-sm transition-all bg-accent text-accent-foreground hover:opacity-90 disabled:opacity-40"
         >
-          {isRunning ? <Flag className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+          <FontAwesomeIcon icon={isRunning ? faFlag : faPlay} className="w-3.5 h-3.5" />
           {isRunning ? 'Running' : 'Run'}
         </button>
         <button
@@ -27,14 +28,14 @@ export default function Toolbar({ isRunning, onRun, onStop, onReset, spriteX, sp
           disabled={!isRunning}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-md font-medium text-sm transition-all bg-destructive text-destructive-foreground hover:opacity-90 disabled:opacity-40"
         >
-          <Square className="w-3.5 h-3.5" />
+          <FontAwesomeIcon icon={faStop} className="w-3 h-3" />
           Stop
         </button>
         <button
           onClick={onReset}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-md font-medium text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          <RotateCcw className="w-3.5 h-3.5" />
+          <FontAwesomeIcon icon={faRotateLeft} className="w-3.5 h-3.5" />
           Reset
         </button>
       </div>
@@ -43,7 +44,7 @@ export default function Toolbar({ isRunning, onRun, onStop, onReset, spriteX, sp
         <span>x: <span className="text-foreground">{Math.round(spriteX)}</span></span>
         <span>y: <span className="text-foreground">{Math.round(spriteY)}</span></span>
         <span>dir: <span className="text-foreground">{Math.round(spriteDirection)}°</span></span>
-        <Maximize2 className="w-3.5 h-3.5 cursor-pointer hover:text-foreground transition-colors" />
+        <FontAwesomeIcon icon={faExpand} className="w-3.5 h-3.5 cursor-pointer hover:text-foreground transition-colors" />
       </div>
     </div>
   );
