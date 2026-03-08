@@ -87,6 +87,7 @@ export class AuroraRuntime {
   answer = '';
   iframeUrl = '';
   iframeVisible = false;
+  aiPersonality = '';
   private keysPressed = new Set<string>();
   private onUpdate: () => void;
   private dragState: { spriteId: string; offsetX: number; offsetY: number } | null = null;
@@ -188,7 +189,7 @@ export class AuroraRuntime {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ prompt, personality: this.aiPersonality || '' }),
       });
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
