@@ -1068,7 +1068,7 @@ javascriptGenerator.forBlock['fetch_json_field'] = function(block: Blockly.Block
 };
 
 // Toolbox definition
-export function buildToolbox(enabledExtensions: string[] = []) {
+export function buildToolbox() {
   const contents: any[] = [
     {
       kind: 'category',
@@ -1189,59 +1189,25 @@ export function buildToolbox(enabledExtensions: string[] = []) {
       colour: '#FF8C1A',
       custom: 'VARIABLE',
     },
-  ];
-
-  // Add "More" separator + extension categories if any are enabled
-  const extCategories: any[] = [];
-
-  if (enabledExtensions.includes('iframe')) {
-    extCategories.push({
-      kind: 'category',
-      name: '🌐 Iframe',
-      colour: '#5B80A5',
-      contents: [
-        { kind: 'block', type: 'iframe_show', inputs: { URL: { shadow: { type: 'text', fields: { TEXT: 'https://example.com' }}}}},
-        { kind: 'block', type: 'iframe_hide' },
-      ],
-    });
-  }
-
-  if (enabledExtensions.includes('fetch')) {
-    extCategories.push({
-      kind: 'category',
-      name: '📡 Fetch',
-      colour: '#CF63CF',
-      contents: [
-        { kind: 'block', type: 'fetch_url', inputs: { URL: { shadow: { type: 'text', fields: { TEXT: 'https://api.example.com/data' }}}}},
-        { kind: 'block', type: 'fetch_json_field' },
-      ],
-    });
-  }
-
-  if (enabledExtensions.includes('ai')) {
-    extCategories.push({
-      kind: 'category',
-      name: '🤖 AI Chat',
-      colour: '#FF6680',
-      contents: [
-        { kind: 'block', type: 'say_message', inputs: { MSG: { shadow: { type: 'text', fields: { TEXT: 'AI Coming Soon!' }}}}},
-      ],
-    });
-  }
-
-  if (extCategories.length > 0) {
-    contents.push({ kind: 'sep', gap: 24 });
-    contents.push({
+    { kind: 'sep', gap: 24 },
+    {
       kind: 'category',
       name: '🧩 More',
       colour: '#888888',
-      contents: extCategories.flatMap(c => [
-        { kind: 'label', text: c.name },
-        ...c.contents,
+      contents: [
+        { kind: 'label', text: '🌐 Iframe' },
+        { kind: 'block', type: 'iframe_show', inputs: { URL: { shadow: { type: 'text', fields: { TEXT: 'https://example.com' }}}}},
+        { kind: 'block', type: 'iframe_hide' },
         { kind: 'sep', gap: 12 },
-      ]),
-    });
-  }
+        { kind: 'label', text: '📡 Fetch' },
+        { kind: 'block', type: 'fetch_url', inputs: { URL: { shadow: { type: 'text', fields: { TEXT: 'https://api.example.com/data' }}}}},
+        { kind: 'block', type: 'fetch_json_field' },
+        { kind: 'sep', gap: 12 },
+        { kind: 'label', text: '🤖 AI Chat' },
+        { kind: 'block', type: 'say_message', inputs: { MSG: { shadow: { type: 'text', fields: { TEXT: 'AI Coming Soon!' }}}}},
+      ],
+    },
+  ];
 
   return { kind: 'categoryToolbox', contents };
 }

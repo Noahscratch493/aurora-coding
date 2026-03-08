@@ -48,14 +48,6 @@ function saveSharedProject(project: SharedProject) {
   localStorage.setItem('aurora_shared_projects', JSON.stringify(projects));
 }
 
-// Extension state
-interface ExtState { iframe: boolean; fetch: boolean; ai: boolean; }
-
-const EXTENSIONS = [
-  { id: 'iframe' as const, name: 'Iframe', description: 'Embed web pages in the stage. Play URLs and toggle iframe visibility with blocks.', icon: faGlobe, color: '#5B80A5' },
-  { id: 'fetch' as const, name: 'Fetch', description: 'Make HTTP requests to fetch data from URLs. Parse JSON responses in your projects.', icon: faDownload, color: '#CF63CF' },
-  { id: 'ai' as const, name: 'AI Chat', description: 'Connect to AI models to generate text, answer questions, and more. (Coming Soon)', icon: faRobot, color: '#FF6680' },
-];
 
 export default function Index() {
   const navigate = useNavigate();
@@ -65,7 +57,7 @@ export default function Index() {
   const workspaceRef = useRef<Blockly.WorkspaceSvg | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [selectedSpriteId, setSelectedSpriteId] = useState('sprite1');
-  const [editorTab, setEditorTab] = useState<'blocks' | 'extensions'>('blocks');
+  const [editorTab, setEditorTab] = useState<'blocks'>('blocks');
   const [rightTab, setRightTab] = useState<'stage' | 'costumes' | 'backgrounds'>('stage');
   const [showHowToCode, setShowHowToCode] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
@@ -74,7 +66,7 @@ export default function Index() {
   const [shareAuthor, setShareAuthor] = useState('');
   const [sharedProjectId, setSharedProjectId] = useState<string | null>(null);
   const [remixOf, setRemixOf] = useState<{ id: string; name: string } | undefined>(undefined);
-  const [extensions, setExtensions] = useState<ExtState>({ iframe: false, fetch: false, ai: false });
+  
   const [customBgs, setCustomBgs] = useState<string[]>(getSavedBackgrounds());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bgInputRef = useRef<HTMLInputElement>(null);
@@ -121,17 +113,6 @@ export default function Index() {
     }
   }, [searchParams, runtime]);
 
-  // Update toolbox when extensions change
-  useEffect(() => {
-    if (workspaceRef.current) {
-      const enabled: string[] = [];
-      if (extensions.iframe) enabled.push('iframe');
-      if (extensions.fetch) enabled.push('fetch');
-      if (extensions.ai) enabled.push('ai');
-      const toolbox = buildToolbox(enabled);
-      workspaceRef.current.updateToolbox(toolbox as any);
-    }
-  }, [extensions]);
 
   // Keyboard events
   useEffect(() => {
@@ -328,57 +309,9 @@ export default function Index() {
       <div className="flex flex-1 overflow-hidden">
         {/* Left: Editor area */}
         <div className="flex-1 min-w-0 flex flex-col">
-          {editorTab === 'extensions' ? (
-            <div className="flex flex-col h-full">
-              <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-card">
-                <button onClick={() => setEditorTab('blocks')} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                  <FontAwesomeIcon icon={faArrowLeft} className="w-3 h-3" /> Back to Blocks
-                </button>
-                <div className="flex-1" />
-                <h2 className="text-sm font-bold text-foreground">Extension Library</h2>
-                <div className="flex-1" />
-              </div>
-              <div className="flex-1 overflow-auto p-6">
-                <p className="text-xs text-muted-foreground mb-6">Enable extensions to add new block categories to your toolbox.</p>
-                <div className="grid grid-cols-1 gap-4">
-                  {EXTENSIONS.map(ext => (
-                    <div key={ext.id} className="flex items-center gap-4 p-4 rounded-xl border border-border bg-card hover:border-primary/30 transition-all">
-                      <div className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: ext.color + '22' }}>
-                        <FontAwesomeIcon icon={ext.icon} className="w-7 h-7" style={{ color: ext.color }} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-bold text-foreground">{ext.name}</h3>
-                        <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">{ext.description}</p>
-                      </div>
-                      <button
-                        onClick={() => setExtensions(prev => ({ ...prev, [ext.id]: !prev[ext.id] }))}
-                        className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
-                          extensions[ext.id]
-                            ? 'bg-destructive/20 text-destructive hover:bg-destructive/30'
-                            : 'bg-primary text-primary-foreground hover:opacity-90'
-                        }`}>
-                        {extensions[ext.id] ? 'Remove' : 'Add'}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="flex-1 min-h-0 relative">
-                <BlocklyEditor workspaceRef={workspaceRef} />
-                {/* Extensions button at bottom of palette */}
-                <button
-                  onClick={() => setEditorTab('extensions')}
-                  className="absolute bottom-3 left-3 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-card border border-border shadow-lg text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-primary/50 transition-all z-10"
-                >
-                  <FontAwesomeIcon icon={faPuzzlePiece} className="w-4 h-4 text-primary" />
-                  Extensions
-                </button>
-              </div>
-            </>
-          )}
+          <div className="flex-1 min-h-0 relative">
+            <BlocklyEditor workspaceRef={workspaceRef} />
+          </div>
         </div>
 
         {/* Right panel */}
