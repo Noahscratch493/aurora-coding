@@ -1191,9 +1191,11 @@ export function buildToolbox(enabledExtensions: string[] = []) {
     },
   ];
 
-  // Add extension categories if enabled
+  // Add "More" separator + extension categories if any are enabled
+  const extCategories: any[] = [];
+
   if (enabledExtensions.includes('iframe')) {
-    contents.push({
+    extCategories.push({
       kind: 'category',
       name: '🌐 Iframe',
       colour: '#5B80A5',
@@ -1205,7 +1207,7 @@ export function buildToolbox(enabledExtensions: string[] = []) {
   }
 
   if (enabledExtensions.includes('fetch')) {
-    contents.push({
+    extCategories.push({
       kind: 'category',
       name: '📡 Fetch',
       colour: '#CF63CF',
@@ -1213,6 +1215,31 @@ export function buildToolbox(enabledExtensions: string[] = []) {
         { kind: 'block', type: 'fetch_url', inputs: { URL: { shadow: { type: 'text', fields: { TEXT: 'https://api.example.com/data' }}}}},
         { kind: 'block', type: 'fetch_json_field' },
       ],
+    });
+  }
+
+  if (enabledExtensions.includes('ai')) {
+    extCategories.push({
+      kind: 'category',
+      name: '🤖 AI Chat',
+      colour: '#FF6680',
+      contents: [
+        { kind: 'block', type: 'say_message', inputs: { MSG: { shadow: { type: 'text', fields: { TEXT: 'AI Coming Soon!' }}}}},
+      ],
+    });
+  }
+
+  if (extCategories.length > 0) {
+    contents.push({ kind: 'sep', gap: 24 });
+    contents.push({
+      kind: 'category',
+      name: '🧩 More',
+      colour: '#888888',
+      contents: extCategories.flatMap(c => [
+        { kind: 'label', text: c.name },
+        ...c.contents,
+        { kind: 'sep', gap: 12 },
+      ]),
     });
   }
 

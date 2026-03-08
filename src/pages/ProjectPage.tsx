@@ -15,6 +15,7 @@ interface SharedProject {
   thumbnail: string;
   data: string;
   createdAt: number;
+  remixOf?: { id: string; name: string; };
 }
 
 function getProject(id: string): SharedProject | null {

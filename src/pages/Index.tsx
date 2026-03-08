@@ -35,6 +35,7 @@ function removeSavedBg(index: number) {
 // Shared project storage
 interface SharedProject {
   id: string; name: string; author: string; thumbnail: string; data: string; createdAt: number;
+  remixOf?: { id: string; name: string; };
 }
 function getSharedProjects(): SharedProject[] {
   try { return JSON.parse(localStorage.getItem('aurora_shared_projects') || '[]'); } catch { return []; }
@@ -53,7 +54,7 @@ interface ExtState { iframe: boolean; fetch: boolean; ai: boolean; }
 const EXTENSIONS = [
   { id: 'iframe' as const, name: 'Iframe', description: 'Embed web pages in the stage. Play URLs and toggle iframe visibility with blocks.', icon: faGlobe, color: '#5B80A5' },
   { id: 'fetch' as const, name: 'Fetch', description: 'Make HTTP requests to fetch data from URLs. Parse JSON responses in your projects.', icon: faDownload, color: '#CF63CF' },
-  { id: 'ai' as const, name: 'AI', description: 'Connect to AI models to generate text, answer questions, and more. (Coming Soon)', icon: faRobot, color: '#FF6680' },
+  { id: 'ai' as const, name: 'AI Chat', description: 'Connect to AI models to generate text, answer questions, and more. (Coming Soon)', icon: faRobot, color: '#FF6680' },
 ];
 
 export default function Index() {
