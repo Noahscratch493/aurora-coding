@@ -276,7 +276,7 @@ export default function Index() {
     const thumbnail = getCanvasThumbnail();
     const project: SharedProject = {
       id, name: shareName || 'Untitled', author: shareAuthor || 'Anonymous',
-      thumbnail, data, createdAt: Date.now(),
+      thumbnail, data, createdAt: Date.now(), remixOf,
     };
     saveSharedProject(project);
     setSharedProjectId(id);
