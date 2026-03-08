@@ -181,6 +181,7 @@ export class AuroraRuntime {
   }
 
   async askAI(prompt: string): Promise<string> {
+    if (!prompt || !prompt.trim()) return 'Please ask me something!';
     try {
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`;
       const resp = await fetch(url, {
