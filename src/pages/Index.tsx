@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import * as Blockly from 'blockly';
 import { javascriptGenerator } from 'blockly/javascript';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faWandMagicSparkles, faCubes, faPalette, faImage, faHouse, faEye, faTrash, faUpload, faPuzzlePiece, faGlobe, faDownload, faRobot, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { faWandMagicSparkles, faCubes, faPalette, faImage, faHouse, faEye, faTrash, faUpload } from '@fortawesome/free-solid-svg-icons';
 import BlocklyEditor from '@/components/aurora/BlocklyEditor';
 import StageCanvas from '@/components/aurora/StageCanvas';
 import SpritePanel from '@/components/aurora/SpritePanel';
