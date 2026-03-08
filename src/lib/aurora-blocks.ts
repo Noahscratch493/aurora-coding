@@ -1,4 +1,5 @@
 import * as Blockly from 'blockly';
+import '@blockly/field-colour';
 import { javascriptGenerator, Order } from 'blockly/javascript';
 
 // ---- MOTION BLOCKS ----
