@@ -22,6 +22,9 @@ export interface SpriteState {
   penColor: string;
   penSize: number;
   colorEffect: number;
+  draggable: boolean;
+  flipX: boolean;
+  flipY: boolean;
 }
 
 export interface PenLine {
@@ -47,6 +50,7 @@ export function createDefaultSprite(id: string, name: string): SpriteState {
     id, name, x: 0, y: 0, direction: 90, size: 100, visible: true,
     costumes: [...DEFAULT_COSTUMES], currentCostumeIndex: 0,
     sayText: '', thinkText: '', penDown: false, penColor: '#4C97FF', penSize: 2, colorEffect: 0,
+    draggable: false, flipX: false, flipY: false,
   };
 }
 
@@ -84,6 +88,7 @@ export class AuroraRuntime {
   iframeVisible = false;
   private keysPressed = new Set<string>();
   private onUpdate: () => void;
+  private dragState: { spriteId: string; offsetX: number; offsetY: number } | null = null;
 
   constructor(onUpdate: () => void) {
     this.onUpdate = onUpdate;
@@ -121,13 +126,44 @@ export class AuroraRuntime {
 
   handleKeyDown(key: string) { this.keysPressed.add(key); }
   handleKeyUp(key: string) { this.keysPressed.delete(key); }
-  handleMouseMove(x: number, y: number) { this.mouseX = x; this.mouseY = y; }
+  handleMouseMove(x: number, y: number) {
+    this.mouseX = x;
+    this.mouseY = y;
+    // Handle dragging
+    if (this.dragState) {
+      const sprite = this.sprites.find(s => s.id === this.dragState!.spriteId);
+      if (sprite) {
+        sprite.x = x + this.dragState.offsetX;
+        sprite.y = y + this.dragState.offsetY;
+        this.onUpdate();
+      }
+    }
+  }
+
+  handleMouseDown(x: number, y: number) {
+    // Check if clicking on a draggable sprite
+    for (let i = this.sprites.length - 1; i >= 0; i--) {
+      const s = this.sprites[i];
+      if (s.draggable && s.visible) {
+        const dx = x - s.x;
+        const dy = y - s.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < (s.size / 100) * 30) {
+          this.dragState = { spriteId: s.id, offsetX: s.x - x, offsetY: s.y - y };
+          return;
+        }
+      }
+    }
+  }
+
+  handleMouseUp() {
+    this.dragState = null;
+  }
 
   clearPen() { this.penLines = []; this.onUpdate(); }
   broadcast(_msg: string) { /* TODO */ }
   async ask(question: string) { this.answer = prompt(question) || ''; }
 
-  // Extension helpers
   showIframe(url: string) { this.iframeUrl = url; this.iframeVisible = true; this.onUpdate(); }
   hideIframe() { this.iframeVisible = false; this.onUpdate(); }
 
@@ -280,7 +316,20 @@ export class AuroraRuntime {
         runtime.onUpdate();
       },
 
-      clearEffects() { spriteState.colorEffect = 0; runtime.onUpdate(); },
+      flipCostume(direction: string) {
+        if (direction === 'horizontal') {
+          spriteState.flipX = !spriteState.flipX;
+        } else {
+          spriteState.flipY = !spriteState.flipY;
+        }
+        runtime.onUpdate();
+      },
+
+      setDraggable(draggable: boolean) {
+        spriteState.draggable = draggable;
+      },
+
+      clearEffects() { spriteState.colorEffect = 0; spriteState.flipX = false; spriteState.flipY = false; runtime.onUpdate(); },
 
       bounceOffEdge() {
         const hw = STAGE_WIDTH / 2, hh = STAGE_HEIGHT / 2;
@@ -298,6 +347,25 @@ export class AuroraRuntime {
       isTouchingEdge() {
         const hw = STAGE_WIDTH / 2, hh = STAGE_HEIGHT / 2;
         return Math.abs(spriteState.x) >= hw - 10 || Math.abs(spriteState.y) >= hh - 10;
+      },
+
+      isTouching(target: string) {
+        if (target === '_edge_') {
+          return this.isTouchingEdge();
+        }
+        if (target === '_mouse_') {
+          const dx = runtime.mouseX - spriteState.x;
+          const dy = runtime.mouseY - spriteState.y;
+          return Math.sqrt(dx * dx + dy * dy) < (spriteState.size / 100) * 30;
+        }
+        // Check touching another sprite by name
+        const other = runtime.sprites.find(s => s.name === target && s.id !== spriteState.id);
+        if (other) {
+          const dx = other.x - spriteState.x;
+          const dy = other.y - spriteState.y;
+          return Math.sqrt(dx * dx + dy * dy) < ((spriteState.size + other.size) / 200) * 30;
+        }
+        return false;
       },
 
       stamp() { runtime.onUpdate(); },
@@ -329,7 +397,15 @@ export class AuroraRuntime {
   loadAurFile(data: string) {
     try {
       const parsed = JSON.parse(data);
-      if (parsed.sprites) this.sprites = parsed.sprites;
+      if (parsed.sprites) {
+        this.sprites = parsed.sprites.map((s: any) => ({
+          ...createDefaultSprite(s.id, s.name),
+          ...s,
+          draggable: s.draggable || false,
+          flipX: s.flipX || false,
+          flipY: s.flipY || false,
+        }));
+      }
       if (parsed.stageBackground) this.stageBackground = parsed.stageBackground;
       this.penLines = [];
       this.onUpdate();

@@ -1,5 +1,5 @@
 import * as Blockly from 'blockly';
-import 'blockly/blocks'; // Ensure built-in blocks (math_number, text, etc.) are registered
+import 'blockly/blocks';
 import '@blockly/field-colour';
 import { javascriptGenerator, Order } from 'blockly/javascript';
 
@@ -11,7 +11,6 @@ Blockly.Blocks['move_steps'] = {
     this.setPreviousStatement(true, null);
     this.setNextStatement(true, null);
     this.setColour(220);
-    this.setTooltip('Move sprite forward');
   },
 };
 
@@ -105,6 +104,19 @@ Blockly.Blocks['point_direction'] = {
 Blockly.Blocks['bounce_edge'] = {
   init(this: Blockly.Block) {
     this.appendDummyInput().appendField('if on edge, bounce');
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setColour(220);
+  },
+};
+
+Blockly.Blocks['set_draggable'] = {
+  init(this: Blockly.Block) {
+    this.appendDummyInput()
+      .appendField('set drag mode')
+      .appendField(new Blockly.FieldDropdown([
+        ['draggable', 'true'], ['not draggable', 'false'],
+      ]), 'MODE');
     this.setPreviousStatement(true, null);
     this.setNextStatement(true, null);
     this.setColour(220);
@@ -224,6 +236,19 @@ Blockly.Blocks['switch_costume'] = {
   },
 };
 
+Blockly.Blocks['flip_costume'] = {
+  init(this: Blockly.Block) {
+    this.appendDummyInput()
+      .appendField('flip costume')
+      .appendField(new Blockly.FieldDropdown([
+        ['horizontally', 'horizontal'], ['vertically', 'vertical'],
+      ]), 'DIRECTION');
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setColour(280);
+  },
+};
+
 Blockly.Blocks['costume_number'] = {
   init(this: Blockly.Block) {
     this.appendDummyInput().appendField('costume #');
@@ -246,7 +271,6 @@ Blockly.Blocks['when_flag_clicked'] = {
     this.appendDummyInput().appendField('when 🚩 clicked');
     this.setNextStatement(true, null);
     this.setColour(45);
-    this.setTooltip('Run when green flag is clicked');
   },
 };
 
@@ -507,6 +531,20 @@ Blockly.Blocks['math_abs'] = {
 };
 
 // ---- SENSING BLOCKS ----
+Blockly.Blocks['touching'] = {
+  init(this: Blockly.Block) {
+    this.appendDummyInput()
+      .appendField('touching')
+      .appendField(new Blockly.FieldDropdown([
+        ['mouse-pointer', '_mouse_'],
+        ['edge', '_edge_'],
+      ]), 'TARGET')
+      .appendField('?');
+    this.setOutput(true, 'Boolean');
+    this.setColour(185);
+  },
+};
+
 Blockly.Blocks['touching_edge'] = {
   init(this: Blockly.Block) {
     this.appendDummyInput().appendField('touching edge?');
@@ -596,63 +634,6 @@ Blockly.Blocks['size_reporter'] = {
   },
 };
 
-// ---- PEN BLOCKS ----
-Blockly.Blocks['pen_down'] = {
-  init(this: Blockly.Block) {
-    this.appendDummyInput().appendField('pen down');
-    this.setPreviousStatement(true, null);
-    this.setNextStatement(true, null);
-    this.setColour(150);
-  },
-};
-
-Blockly.Blocks['pen_up'] = {
-  init(this: Blockly.Block) {
-    this.appendDummyInput().appendField('pen up');
-    this.setPreviousStatement(true, null);
-    this.setNextStatement(true, null);
-    this.setColour(150);
-  },
-};
-
-Blockly.Blocks['pen_clear'] = {
-  init(this: Blockly.Block) {
-    this.appendDummyInput().appendField('erase all');
-    this.setPreviousStatement(true, null);
-    this.setNextStatement(true, null);
-    this.setColour(150);
-  },
-};
-
-Blockly.Blocks['set_pen_color'] = {
-  init(this: Blockly.Block) {
-    this.appendDummyInput()
-      .appendField('set pen color to')
-      .appendField(new (Blockly as any).FieldColour('#ff0000'), 'COLOR');
-    this.setPreviousStatement(true, null);
-    this.setNextStatement(true, null);
-    this.setColour(150);
-  },
-};
-
-Blockly.Blocks['set_pen_size'] = {
-  init(this: Blockly.Block) {
-    this.appendValueInput('SIZE').setCheck('Number').appendField('set pen size to');
-    this.setPreviousStatement(true, null);
-    this.setNextStatement(true, null);
-    this.setColour(150);
-  },
-};
-
-Blockly.Blocks['stamp'] = {
-  init(this: Blockly.Block) {
-    this.appendDummyInput().appendField('stamp');
-    this.setPreviousStatement(true, null);
-    this.setNextStatement(true, null);
-    this.setColour(150);
-  },
-};
-
 // ---- EXTENSION BLOCKS ----
 // Iframe
 Blockly.Blocks['iframe_show'] = {
@@ -693,7 +674,6 @@ Blockly.Blocks['fetch_json_field'] = {
 
 // ---- CODE GENERATORS ----
 
-// Ensure math_number and text generators exist (safety fallback)
 if (!javascriptGenerator.forBlock['math_number']) {
   javascriptGenerator.forBlock['math_number'] = function(block: Blockly.Block) {
     const num = Number(block.getFieldValue('NUM'));
@@ -765,6 +745,11 @@ javascriptGenerator.forBlock['bounce_edge'] = function() {
   return `sprite.bounceOffEdge();\n`;
 };
 
+javascriptGenerator.forBlock['set_draggable'] = function(block: Blockly.Block) {
+  const mode = block.getFieldValue('MODE');
+  return `sprite.setDraggable(${mode});\n`;
+};
+
 javascriptGenerator.forBlock['say_message'] = function(block: Blockly.Block) {
   const msg = javascriptGenerator.valueToCode(block, 'MSG', Order.ATOMIC) || "''";
   return `await sprite.say(${msg});\n`;
@@ -808,7 +793,6 @@ javascriptGenerator.forBlock['clear_effects'] = function() {
   return `sprite.clearEffects();\n`;
 };
 
-// Costume generators
 javascriptGenerator.forBlock['next_costume'] = function() {
   return `sprite.nextCostume();\nawait runtime.tick();\n`;
 };
@@ -822,6 +806,11 @@ javascriptGenerator.forBlock['switch_costume'] = function(block: Blockly.Block) 
   return `sprite.switchCostume(${name});\nawait runtime.tick();\n`;
 };
 
+javascriptGenerator.forBlock['flip_costume'] = function(block: Blockly.Block) {
+  const dir = block.getFieldValue('DIRECTION');
+  return `sprite.flipCostume('${dir}');\nawait runtime.tick();\n`;
+};
+
 javascriptGenerator.forBlock['costume_number'] = function() {
   return [`sprite.costumeNumber`, Order.ATOMIC];
 };
@@ -830,7 +819,6 @@ javascriptGenerator.forBlock['costume_name'] = function() {
   return [`sprite.costumeName`, Order.ATOMIC];
 };
 
-// Reporter blocks
 javascriptGenerator.forBlock['x_position'] = function() {
   return [`sprite.x`, Order.ATOMIC];
 };
@@ -1005,6 +993,11 @@ javascriptGenerator.forBlock['math_abs'] = function(block: Blockly.Block) {
 };
 
 // Sensing
+javascriptGenerator.forBlock['touching'] = function(block: Blockly.Block) {
+  const target = block.getFieldValue('TARGET');
+  return [`sprite.isTouching('${target}')`, Order.FUNCTION_CALL];
+};
+
 javascriptGenerator.forBlock['touching_edge'] = function() {
   return [`sprite.isTouchingEdge()`, Order.FUNCTION_CALL];
 };
@@ -1029,33 +1022,6 @@ javascriptGenerator.forBlock['ask_and_wait'] = function(block: Blockly.Block) {
 
 javascriptGenerator.forBlock['answer'] = function() {
   return [`runtime.answer`, Order.ATOMIC];
-};
-
-// Pen
-javascriptGenerator.forBlock['pen_down'] = function() {
-  return `sprite.penDown = true;\n`;
-};
-
-javascriptGenerator.forBlock['pen_up'] = function() {
-  return `sprite.penDown = false;\n`;
-};
-
-javascriptGenerator.forBlock['pen_clear'] = function() {
-  return `runtime.clearPen();\n`;
-};
-
-javascriptGenerator.forBlock['set_pen_color'] = function(block: Blockly.Block) {
-  const color = block.getFieldValue('COLOR');
-  return `sprite.penColor = '${color}';\n`;
-};
-
-javascriptGenerator.forBlock['set_pen_size'] = function(block: Blockly.Block) {
-  const size = javascriptGenerator.valueToCode(block, 'SIZE', Order.ATOMIC) || '1';
-  return `sprite.penSize = ${size};\n`;
-};
-
-javascriptGenerator.forBlock['stamp'] = function() {
-  return `sprite.stamp();\n`;
 };
 
 // Extension generators
@@ -1098,6 +1064,7 @@ export function buildToolbox(enabledExtensions: string[] = []) {
         { kind: 'block', type: 'change_y', inputs: { DY: { shadow: { type: 'math_number', fields: { NUM: 10 }}}}},
         { kind: 'block', type: 'point_direction', inputs: { DIR: { shadow: { type: 'math_number', fields: { NUM: 90 }}}}},
         { kind: 'block', type: 'bounce_edge' },
+        { kind: 'block', type: 'set_draggable' },
         { kind: 'sep', gap: 16 },
         { kind: 'block', type: 'x_position' },
         { kind: 'block', type: 'y_position' },
@@ -1116,6 +1083,7 @@ export function buildToolbox(enabledExtensions: string[] = []) {
         { kind: 'block', type: 'next_costume' },
         { kind: 'block', type: 'prev_costume' },
         { kind: 'block', type: 'switch_costume', inputs: { NAME: { shadow: { type: 'text', fields: { TEXT: 'Default' }}}}},
+        { kind: 'block', type: 'flip_costume' },
         { kind: 'block', type: 'costume_number' },
         { kind: 'block', type: 'costume_name' },
         { kind: 'sep', gap: 16 },
@@ -1183,6 +1151,7 @@ export function buildToolbox(enabledExtensions: string[] = []) {
       name: '👁 Sensing',
       colour: '#5CB1D6',
       contents: [
+        { kind: 'block', type: 'touching' },
         { kind: 'block', type: 'touching_edge' },
         { kind: 'block', type: 'mouse_x' },
         { kind: 'block', type: 'mouse_y' },
@@ -1193,52 +1162,42 @@ export function buildToolbox(enabledExtensions: string[] = []) {
     },
     {
       kind: 'category',
-      name: '🖊 Pen',
-      colour: '#0fBD8C',
-      contents: [
-        { kind: 'block', type: 'pen_clear' },
-        { kind: 'block', type: 'stamp' },
-        { kind: 'block', type: 'pen_down' },
-        { kind: 'block', type: 'pen_up' },
-        { kind: 'block', type: 'set_pen_color' },
-        { kind: 'block', type: 'set_pen_size', inputs: { SIZE: { shadow: { type: 'math_number', fields: { NUM: 1 }}}}},
-      ],
-    },
-    {
-      kind: 'category',
       name: '📦 Variables',
       colour: '#FF8C1A',
       custom: 'VARIABLE',
     },
   ];
 
-  // Add extension categories
+  // More category with extensions
+  const moreContents: any[] = [];
+
   if (enabledExtensions.includes('iframe')) {
-    contents.push({
-      kind: 'category',
-      name: '🌐 Iframe',
-      colour: '#5BA5A5',
-      contents: [
-        { kind: 'block', type: 'iframe_show', inputs: { URL: { shadow: { type: 'text', fields: { TEXT: 'https://example.com' }}}}},
-        { kind: 'block', type: 'iframe_hide' },
-      ],
-    });
+    moreContents.push(
+      { kind: 'label', text: '── Iframe ──' },
+      { kind: 'block', type: 'iframe_show', inputs: { URL: { shadow: { type: 'text', fields: { TEXT: 'https://example.com' }}}}},
+      { kind: 'block', type: 'iframe_hide' },
+    );
   }
 
   if (enabledExtensions.includes('fetch')) {
-    contents.push({
-      kind: 'category',
-      name: '📡 Fetch',
-      colour: '#E040FB',
-      contents: [
-        { kind: 'block', type: 'fetch_url', inputs: { URL: { shadow: { type: 'text', fields: { TEXT: 'https://api.example.com/data' }}}}},
-        { kind: 'block', type: 'fetch_json_field' },
-      ],
-    });
+    moreContents.push(
+      { kind: 'label', text: '── Fetch ──' },
+      { kind: 'block', type: 'fetch_url', inputs: { URL: { shadow: { type: 'text', fields: { TEXT: 'https://api.example.com/data' }}}}},
+      { kind: 'block', type: 'fetch_json_field' },
+    );
   }
+
+  // Always show the More category
+  contents.push({
+    kind: 'category',
+    name: '➕ More',
+    colour: '#7C8EA6',
+    contents: moreContents.length > 0
+      ? moreContents
+      : [{ kind: 'label', text: 'Enable extensions in the editor to add blocks here.' }],
+  });
 
   return { kind: 'categoryToolbox', contents };
 }
 
-// Default toolbox (no extensions)
 export const AURORA_TOOLBOX = buildToolbox();
