@@ -1104,6 +1104,11 @@ javascriptGenerator.forBlock['ai_say'] = function(block: Blockly.Block) {
   return `sprite.say(await runtime.askAI(${prompt}));\n`;
 };
 
+javascriptGenerator.forBlock['ai_set_personality'] = function(block: Blockly.Block) {
+  const personality = javascriptGenerator.valueToCode(block, 'PERSONALITY', Order.ATOMIC) || "''";
+  return `runtime.aiPersonality = ${personality};\n`;
+};
+
 // Toolbox definition
 export function buildToolbox() {
   const contents: any[] = [

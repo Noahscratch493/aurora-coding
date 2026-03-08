@@ -87,6 +87,7 @@ export class AuroraRuntime {
   answer = '';
   iframeUrl = '';
   iframeVisible = false;
+  aiPersonality = '';
   private keysPressed = new Set<string>();
   private onUpdate: () => void;
   private dragState: { spriteId: string; offsetX: number; offsetY: number } | null = null;
