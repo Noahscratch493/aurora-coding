@@ -1,4 +1,5 @@
 import * as Blockly from 'blockly';
+import 'blockly/blocks'; // Ensure built-in blocks (math_number, text, etc.) are registered
 import '@blockly/field-colour';
 import { javascriptGenerator, Order } from 'blockly/javascript';
 
@@ -191,6 +192,50 @@ Blockly.Blocks['clear_effects'] = {
     this.appendDummyInput().appendField('clear graphic effects');
     this.setPreviousStatement(true, null);
     this.setNextStatement(true, null);
+    this.setColour(280);
+  },
+};
+
+// Costume blocks
+Blockly.Blocks['next_costume'] = {
+  init(this: Blockly.Block) {
+    this.appendDummyInput().appendField('next costume');
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setColour(280);
+  },
+};
+
+Blockly.Blocks['prev_costume'] = {
+  init(this: Blockly.Block) {
+    this.appendDummyInput().appendField('previous costume');
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setColour(280);
+  },
+};
+
+Blockly.Blocks['switch_costume'] = {
+  init(this: Blockly.Block) {
+    this.appendValueInput('NAME').setCheck('String').appendField('switch costume to');
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setColour(280);
+  },
+};
+
+Blockly.Blocks['costume_number'] = {
+  init(this: Blockly.Block) {
+    this.appendDummyInput().appendField('costume #');
+    this.setOutput(true, 'Number');
+    this.setColour(280);
+  },
+};
+
+Blockly.Blocks['costume_name'] = {
+  init(this: Blockly.Block) {
+    this.appendDummyInput().appendField('costume name');
+    this.setOutput(true, 'String');
     this.setColour(280);
   },
 };
@@ -519,6 +564,38 @@ Blockly.Blocks['answer'] = {
   },
 };
 
+Blockly.Blocks['x_position'] = {
+  init(this: Blockly.Block) {
+    this.appendDummyInput().appendField('x position');
+    this.setOutput(true, 'Number');
+    this.setColour(220);
+  },
+};
+
+Blockly.Blocks['y_position'] = {
+  init(this: Blockly.Block) {
+    this.appendDummyInput().appendField('y position');
+    this.setOutput(true, 'Number');
+    this.setColour(220);
+  },
+};
+
+Blockly.Blocks['direction_reporter'] = {
+  init(this: Blockly.Block) {
+    this.appendDummyInput().appendField('direction');
+    this.setOutput(true, 'Number');
+    this.setColour(220);
+  },
+};
+
+Blockly.Blocks['size_reporter'] = {
+  init(this: Blockly.Block) {
+    this.appendDummyInput().appendField('size');
+    this.setOutput(true, 'Number');
+    this.setColour(280);
+  },
+};
+
 // ---- PEN BLOCKS ----
 Blockly.Blocks['pen_down'] = {
   init(this: Blockly.Block) {
@@ -576,8 +653,60 @@ Blockly.Blocks['stamp'] = {
   },
 };
 
+// ---- EXTENSION BLOCKS ----
+// Iframe
+Blockly.Blocks['iframe_show'] = {
+  init(this: Blockly.Block) {
+    this.appendValueInput('URL').setCheck('String').appendField('show iframe');
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setColour(195);
+  },
+};
+
+Blockly.Blocks['iframe_hide'] = {
+  init(this: Blockly.Block) {
+    this.appendDummyInput().appendField('hide iframe');
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setColour(195);
+  },
+};
+
+// Fetch
+Blockly.Blocks['fetch_url'] = {
+  init(this: Blockly.Block) {
+    this.appendValueInput('URL').setCheck('String').appendField('fetch');
+    this.setOutput(true, 'String');
+    this.setColour(330);
+  },
+};
+
+Blockly.Blocks['fetch_json_field'] = {
+  init(this: Blockly.Block) {
+    this.appendValueInput('DATA').setCheck('String').appendField('get field');
+    this.appendValueInput('FIELD').setCheck('String').appendField('from');
+    this.setOutput(true, 'String');
+    this.setColour(330);
+  },
+};
+
 // ---- CODE GENERATORS ----
-// We generate a custom IR (instruction list) rather than real JS
+
+// Ensure math_number and text generators exist (safety fallback)
+if (!javascriptGenerator.forBlock['math_number']) {
+  javascriptGenerator.forBlock['math_number'] = function(block: Blockly.Block) {
+    const num = Number(block.getFieldValue('NUM'));
+    return [String(num), Order.ATOMIC];
+  };
+}
+
+if (!javascriptGenerator.forBlock['text']) {
+  javascriptGenerator.forBlock['text'] = function(block: Blockly.Block) {
+    const text = block.getFieldValue('TEXT') || '';
+    return [`'${text.replace(/'/g, "\\'")}'`, Order.ATOMIC];
+  };
+}
 
 javascriptGenerator.forBlock['move_steps'] = function(block: Blockly.Block) {
   const steps = javascriptGenerator.valueToCode(block, 'STEPS', Order.ATOMIC) || '10';
@@ -629,7 +758,7 @@ javascriptGenerator.forBlock['change_y'] = function(block: Blockly.Block) {
 
 javascriptGenerator.forBlock['point_direction'] = function(block: Blockly.Block) {
   const dir = javascriptGenerator.valueToCode(block, 'DIR', Order.ATOMIC) || '90';
-  return `sprite.direction = ${dir};\n`;
+  return `sprite.direction = ${dir};\nawait runtime.tick();\n`;
 };
 
 javascriptGenerator.forBlock['bounce_edge'] = function() {
@@ -654,12 +783,12 @@ javascriptGenerator.forBlock['think_message'] = function(block: Blockly.Block) {
 
 javascriptGenerator.forBlock['change_size'] = function(block: Blockly.Block) {
   const size = javascriptGenerator.valueToCode(block, 'SIZE', Order.ATOMIC) || '10';
-  return `sprite.changeSize(${size});\n`;
+  return `sprite.changeSize(${size});\nawait runtime.tick();\n`;
 };
 
 javascriptGenerator.forBlock['set_size'] = function(block: Blockly.Block) {
   const size = javascriptGenerator.valueToCode(block, 'SIZE', Order.ATOMIC) || '100';
-  return `sprite.setSize(${size});\n`;
+  return `sprite.setSize(${size});\nawait runtime.tick();\n`;
 };
 
 javascriptGenerator.forBlock['show_sprite'] = function() {
@@ -679,6 +808,46 @@ javascriptGenerator.forBlock['clear_effects'] = function() {
   return `sprite.clearEffects();\n`;
 };
 
+// Costume generators
+javascriptGenerator.forBlock['next_costume'] = function() {
+  return `sprite.nextCostume();\nawait runtime.tick();\n`;
+};
+
+javascriptGenerator.forBlock['prev_costume'] = function() {
+  return `sprite.prevCostume();\nawait runtime.tick();\n`;
+};
+
+javascriptGenerator.forBlock['switch_costume'] = function(block: Blockly.Block) {
+  const name = javascriptGenerator.valueToCode(block, 'NAME', Order.ATOMIC) || "''";
+  return `sprite.switchCostume(${name});\nawait runtime.tick();\n`;
+};
+
+javascriptGenerator.forBlock['costume_number'] = function() {
+  return [`sprite.costumeNumber`, Order.ATOMIC];
+};
+
+javascriptGenerator.forBlock['costume_name'] = function() {
+  return [`sprite.costumeName`, Order.ATOMIC];
+};
+
+// Reporter blocks
+javascriptGenerator.forBlock['x_position'] = function() {
+  return [`sprite.x`, Order.ATOMIC];
+};
+
+javascriptGenerator.forBlock['y_position'] = function() {
+  return [`sprite.y`, Order.ATOMIC];
+};
+
+javascriptGenerator.forBlock['direction_reporter'] = function() {
+  return [`sprite.direction`, Order.ATOMIC];
+};
+
+javascriptGenerator.forBlock['size_reporter'] = function() {
+  return [`sprite.size`, Order.ATOMIC];
+};
+
+// Events
 javascriptGenerator.forBlock['when_flag_clicked'] = function() {
   return '';
 };
@@ -889,10 +1058,30 @@ javascriptGenerator.forBlock['stamp'] = function() {
   return `sprite.stamp();\n`;
 };
 
+// Extension generators
+javascriptGenerator.forBlock['iframe_show'] = function(block: Blockly.Block) {
+  const url = javascriptGenerator.valueToCode(block, 'URL', Order.ATOMIC) || "''";
+  return `runtime.showIframe(${url});\n`;
+};
+
+javascriptGenerator.forBlock['iframe_hide'] = function() {
+  return `runtime.hideIframe();\n`;
+};
+
+javascriptGenerator.forBlock['fetch_url'] = function(block: Blockly.Block) {
+  const url = javascriptGenerator.valueToCode(block, 'URL', Order.ATOMIC) || "''";
+  return [`await runtime.fetchUrl(${url})`, Order.AWAIT];
+};
+
+javascriptGenerator.forBlock['fetch_json_field'] = function(block: Blockly.Block) {
+  const data = javascriptGenerator.valueToCode(block, 'DATA', Order.ATOMIC) || "'{}'";
+  const field = javascriptGenerator.valueToCode(block, 'FIELD', Order.ATOMIC) || "''";
+  return [`runtime.getJsonField(${data}, ${field})`, Order.FUNCTION_CALL];
+};
+
 // Toolbox definition
-export const AURORA_TOOLBOX = {
-  kind: 'categoryToolbox',
-  contents: [
+export function buildToolbox(enabledExtensions: string[] = []) {
+  const contents: any[] = [
     {
       kind: 'category',
       name: '🚀 Motion',
@@ -909,6 +1098,10 @@ export const AURORA_TOOLBOX = {
         { kind: 'block', type: 'change_y', inputs: { DY: { shadow: { type: 'math_number', fields: { NUM: 10 }}}}},
         { kind: 'block', type: 'point_direction', inputs: { DIR: { shadow: { type: 'math_number', fields: { NUM: 90 }}}}},
         { kind: 'block', type: 'bounce_edge' },
+        { kind: 'sep', gap: 16 },
+        { kind: 'block', type: 'x_position' },
+        { kind: 'block', type: 'y_position' },
+        { kind: 'block', type: 'direction_reporter' },
       ],
     },
     {
@@ -919,8 +1112,17 @@ export const AURORA_TOOLBOX = {
         { kind: 'block', type: 'say_message', inputs: { MSG: { shadow: { type: 'text', fields: { TEXT: 'Hello!' }}}}},
         { kind: 'block', type: 'say_for_secs', inputs: { MSG: { shadow: { type: 'text', fields: { TEXT: 'Hello!' }}}, SECS: { shadow: { type: 'math_number', fields: { NUM: 2 }}}}},
         { kind: 'block', type: 'think_message', inputs: { MSG: { shadow: { type: 'text', fields: { TEXT: 'Hmm...' }}}}},
+        { kind: 'sep', gap: 16 },
+        { kind: 'block', type: 'next_costume' },
+        { kind: 'block', type: 'prev_costume' },
+        { kind: 'block', type: 'switch_costume', inputs: { NAME: { shadow: { type: 'text', fields: { TEXT: 'Default' }}}}},
+        { kind: 'block', type: 'costume_number' },
+        { kind: 'block', type: 'costume_name' },
+        { kind: 'sep', gap: 16 },
         { kind: 'block', type: 'change_size', inputs: { SIZE: { shadow: { type: 'math_number', fields: { NUM: 10 }}}}},
         { kind: 'block', type: 'set_size', inputs: { SIZE: { shadow: { type: 'math_number', fields: { NUM: 100 }}}}},
+        { kind: 'block', type: 'size_reporter' },
+        { kind: 'sep', gap: 16 },
         { kind: 'block', type: 'show_sprite' },
         { kind: 'block', type: 'hide_sprite' },
         { kind: 'block', type: 'set_color_effect', inputs: { VALUE: { shadow: { type: 'math_number', fields: { NUM: 25 }}}}},
@@ -1008,5 +1210,35 @@ export const AURORA_TOOLBOX = {
       colour: '#FF8C1A',
       custom: 'VARIABLE',
     },
-  ],
-};
+  ];
+
+  // Add extension categories
+  if (enabledExtensions.includes('iframe')) {
+    contents.push({
+      kind: 'category',
+      name: '🌐 Iframe',
+      colour: '#5BA5A5',
+      contents: [
+        { kind: 'block', type: 'iframe_show', inputs: { URL: { shadow: { type: 'text', fields: { TEXT: 'https://example.com' }}}}},
+        { kind: 'block', type: 'iframe_hide' },
+      ],
+    });
+  }
+
+  if (enabledExtensions.includes('fetch')) {
+    contents.push({
+      kind: 'category',
+      name: '📡 Fetch',
+      colour: '#E040FB',
+      contents: [
+        { kind: 'block', type: 'fetch_url', inputs: { URL: { shadow: { type: 'text', fields: { TEXT: 'https://api.example.com/data' }}}}},
+        { kind: 'block', type: 'fetch_json_field' },
+      ],
+    });
+  }
+
+  return { kind: 'categoryToolbox', contents };
+}
+
+// Default toolbox (no extensions)
+export const AURORA_TOOLBOX = buildToolbox();

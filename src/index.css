@@ -8,35 +8,25 @@
   :root {
     --background: 230 25% 10%;
     --foreground: 210 40% 95%;
-
     --card: 230 25% 14%;
     --card-foreground: 210 40% 95%;
-
     --popover: 230 25% 14%;
     --popover-foreground: 210 40% 95%;
-
     --primary: 280 80% 60%;
     --primary-foreground: 0 0% 100%;
-
     --secondary: 200 80% 50%;
     --secondary-foreground: 0 0% 100%;
-
     --muted: 230 20% 18%;
     --muted-foreground: 220 15% 55%;
-
     --accent: 160 70% 45%;
     --accent-foreground: 0 0% 100%;
-
     --destructive: 0 75% 55%;
     --destructive-foreground: 0 0% 100%;
-
     --border: 230 20% 22%;
     --input: 230 20% 22%;
     --ring: 280 80% 60%;
-
     --radius: 0.75rem;
 
-    /* Aurora custom tokens */
     --aurora-pink: 320 80% 60%;
     --aurora-cyan: 185 90% 55%;
     --aurora-green: 160 70% 45%;
@@ -61,40 +51,36 @@
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
-
+  * { @apply border-border; }
   body {
     @apply bg-background text-foreground font-sans;
     font-family: 'Space Grotesk', sans-serif;
   }
-
-  code, .font-mono {
-    font-family: 'JetBrains Mono', monospace;
-  }
+  code, .font-mono { font-family: 'JetBrains Mono', monospace; }
 }
 
-/* Aurora gradient backgrounds */
 .aurora-gradient {
-  background: linear-gradient(
-    135deg,
+  background: linear-gradient(135deg,
     hsl(var(--aurora-purple) / 0.3),
     hsl(var(--aurora-blue) / 0.2),
     hsl(var(--aurora-cyan) / 0.15),
-    hsl(var(--aurora-green) / 0.1)
-  );
+    hsl(var(--aurora-green) / 0.1));
 }
 
 .aurora-glow {
-  box-shadow: 
-    0 0 20px hsl(var(--aurora-purple) / 0.15),
-    0 0 40px hsl(var(--aurora-blue) / 0.1);
+  box-shadow: 0 0 20px hsl(var(--aurora-purple) / 0.15), 0 0 40px hsl(var(--aurora-blue) / 0.1);
 }
 
-/* Blockly overrides */
+/* ==========================================
+   BLOCKLY OVERRIDES - Comprehensive dark theme
+   ========================================== */
+
 .blocklySvg {
   background: hsl(var(--panel-bg)) !important;
+}
+
+.blocklyMainBackground {
+  fill: hsl(var(--panel-bg)) !important;
 }
 
 .blocklyToolboxDiv {
@@ -120,78 +106,115 @@
   rx: 4;
 }
 
-.blocklyMainBackground {
-  fill: hsl(var(--panel-bg)) !important;
-}
-
-.blocklyText {
+.blocklyTreeLabel {
+  color: hsl(var(--foreground)) !important;
   font-family: 'Space Grotesk', sans-serif !important;
-  fill: #fff !important;
 }
 
-/* Fix text input fields in blocks */
+/* ALL text in blocks should be white */
+.blocklyText {
+  fill: #ffffff !important;
+  font-family: 'Space Grotesk', sans-serif !important;
+}
+
+/* Shadow block text (the editable number/text inputs) */
+.blocklyEditableText .blocklyText {
+  fill: #ffffff !important;
+}
+
+/* Make editable field backgrounds visible */
+.blocklyEditableText > .blocklyBlockBackground,
 .blocklyEditableText > rect {
-  fill: rgba(255,255,255,0.15) !important;
-  stroke: rgba(255,255,255,0.2) !important;
+  fill: rgba(255, 255, 255, 0.2) !important;
+  stroke: rgba(255, 255, 255, 0.1) !important;
   rx: 4 !important;
 }
 
+/* Text input when editing inline */
 .blocklyHtmlInput {
-  color: #fff !important;
-  background: hsl(230, 25%, 20%) !important;
-  border: 1px solid hsl(230, 20%, 35%) !important;
-  border-radius: 4px !important;
-  padding: 2px 6px !important;
+  color: #ffffff !important;
+  background-color: hsl(230, 25%, 18%) !important;
+  border: 2px solid hsl(280, 80%, 60%) !important;
+  border-radius: 6px !important;
+  padding: 2px 8px !important;
   font-family: 'Space Grotesk', sans-serif !important;
-  font-size: 12px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  outline: none !important;
+  box-shadow: 0 0 8px hsl(280, 80%, 60%, 0.3) !important;
 }
 
+/* Field text input (the rounded pill in Zelos) */
+.blocklyFieldTextInput {
+  color: #ffffff !important;
+}
+
+/* Dropdown menus */
 .blocklyDropDownDiv {
   background-color: hsl(230, 25%, 14%) !important;
-  border: 1px solid hsl(230, 20%, 25%) !important;
+  border: 1px solid hsl(230, 20%, 30%) !important;
   border-radius: 8px !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4) !important;
 }
 
 .blocklyDropDownDiv .blocklyMenuItem {
   color: #fff !important;
+  font-family: 'Space Grotesk', sans-serif !important;
 }
 
 .blocklyDropDownDiv .blocklyMenuItemHighlight {
   background-color: hsl(280, 80%, 60%, 0.3) !important;
 }
 
-.blocklyFieldTextInput {
-  color: #fff !important;
-}
-
 .blocklyWidgetDiv .blocklyMenu {
   background: hsl(230, 25%, 14%) !important;
-  border: 1px solid hsl(230, 20%, 25%) !important;
+  border: 1px solid hsl(230, 20%, 30%) !important;
   border-radius: 8px !important;
   padding: 4px !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4) !important;
 }
 
 .blocklyWidgetDiv .blocklyMenuItem .blocklyMenuItemContent {
   color: #fff !important;
+  font-family: 'Space Grotesk', sans-serif !important;
 }
 
 .blocklyWidgetDiv .blocklyMenuItemHighlight .blocklyMenuItemContent {
   color: #fff !important;
 }
 
-.blocklyTreeLabel {
-  color: hsl(var(--foreground)) !important;
-  font-family: 'Space Grotesk', sans-serif !important;
+/* Bubble text (comments etc) */
+.blocklyCommentTextarea {
+  background: hsl(230, 25%, 18%) !important;
+  color: #fff !important;
+  border: 1px solid hsl(230, 20%, 30%) !important;
 }
 
-/* Stage canvas */
+/* Trashcan */
+.blocklyTrash {
+  opacity: 0.6;
+}
+
+/* Zoom controls */
+.blocklyZoom > image {
+  opacity: 0.7;
+}
+
+/* Category icon colors */
+.blocklyTreeIcon {
+  fill: currentColor !important;
+}
+
+/* ==========================================
+   Stage & UI
+   ========================================== */
+
 .aurora-stage {
   background: hsl(var(--stage-bg));
   border: 1px solid hsl(var(--border));
   border-radius: var(--radius);
 }
 
-/* Category colors */
 .category-motion { color: hsl(var(--aurora-blue)); }
 .category-looks { color: hsl(var(--aurora-purple)); }
 .category-sound { color: hsl(var(--aurora-pink)); }
@@ -200,15 +223,6 @@
 .category-operators { color: hsl(var(--aurora-green)); }
 .category-variables { color: hsl(var(--aurora-cyan)); }
 
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.3);
-  border-radius: 3px;
-}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground) / 0.3); border-radius: 3px; }
