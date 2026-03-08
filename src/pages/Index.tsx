@@ -89,10 +89,12 @@ export default function Index() {
   // Load project from URL param
   useEffect(() => {
     const loadId = searchParams.get('load');
-    if (loadId) {
+    const remixId = searchParams.get('remix');
+    const targetId = loadId || remixId;
+    if (targetId) {
       try {
         const projects: SharedProject[] = JSON.parse(localStorage.getItem('aurora_shared_projects') || '[]');
-        const p = projects.find(proj => proj.id === loadId);
+        const p = projects.find(proj => proj.id === targetId);
         if (p?.data) {
           const workspaceXml = runtime.loadAurFile(p.data);
           if (workspaceXml && workspaceRef.current) {
@@ -101,9 +103,18 @@ export default function Index() {
             Blockly.Xml.domToWorkspace(dom, workspaceRef.current);
           }
           if (runtime.sprites.length > 0) setSelectedSpriteId(runtime.sprites[0].id);
-          setSharedProjectId(loadId);
-          setShareName(p.name);
-          setShareAuthor(p.author);
+          if (loadId) {
+            setSharedProjectId(loadId);
+            setShareName(p.name);
+            setShareAuthor(p.author);
+            if (p.remixOf) setRemixOf(p.remixOf);
+          } else if (remixId) {
+            // Remix: new project that references the original
+            setSharedProjectId(null);
+            setShareName(`${p.name} Remix`);
+            setShareAuthor('');
+            setRemixOf({ id: p.id, name: p.name });
+          }
           setRenderKey(n => n + 1);
         }
       } catch {}
