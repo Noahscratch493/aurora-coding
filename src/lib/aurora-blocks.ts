@@ -1232,7 +1232,8 @@ export function buildToolbox() {
         { kind: 'block', type: 'fetch_json_field' },
         { kind: 'sep', gap: 12 },
         { kind: 'label', text: '🤖 AI Chat' },
-        { kind: 'block', type: 'say_message', inputs: { MSG: { shadow: { type: 'text', fields: { TEXT: 'AI Coming Soon!' }}}}},
+        { kind: 'block', type: 'ai_ask', inputs: { PROMPT: { shadow: { type: 'text', fields: { TEXT: 'Tell me a joke' }}}}},
+        { kind: 'block', type: 'ai_say', inputs: { PROMPT: { shadow: { type: 'text', fields: { TEXT: 'Tell me a fun fact' }}}}},
       ],
     },
   ];
