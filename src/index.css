@@ -122,12 +122,28 @@
   fill: #ffffff !important;
 }
 
-/* Make editable field backgrounds visible */
+/* Make editable field backgrounds BLACK for visibility */
 .blocklyEditableText > .blocklyBlockBackground,
-.blocklyEditableText > rect {
-  fill: rgba(255, 255, 255, 0.2) !important;
-  stroke: rgba(255, 255, 255, 0.1) !important;
+.blocklyEditableText > rect,
+.blocklyEditableText > .blocklyFieldRect {
+  fill: #000000 !important;
+  stroke: rgba(255, 255, 255, 0.2) !important;
   rx: 4 !important;
+}
+
+/* Shadow blocks (the rounded pills in Zelos renderer) */
+.blocklyDraggable.blocklySelected > .blocklyPath {
+}
+
+/* Force all field rects to be black */
+.blocklyFieldRect {
+  fill: #000000 !important;
+  stroke: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Number/text input shadow blocks should have dark bg */
+.blocklyShadow > .blocklyPath {
+  fill-opacity: 0.6 !important;
 }
 
 /* Text input when editing inline */
