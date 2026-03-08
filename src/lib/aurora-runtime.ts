@@ -179,6 +179,30 @@ export class AuroraRuntime {
     try { return String(JSON.parse(data)[field] || ''); } catch { return ''; }
   }
 
+  async askAI(prompt: string): Promise<string> {
+    try {
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`;
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ prompt }),
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        console.error('AI Chat error:', err.error || resp.statusText);
+        return err.error || 'AI is unavailable right now.';
+      }
+      const data = await resp.json();
+      return data.reply || 'No response.';
+    } catch (e) {
+      console.error('AI Chat error:', e);
+      return 'Could not reach AI.';
+    }
+  }
+
   addSprite(id: string, name: string) {
     this.sprites.push(createDefaultSprite(id, name));
     this.onUpdate();
