@@ -51,7 +51,7 @@ export function createDefaultSprite(id: string, name: string): SpriteState {
     id, name, x: 0, y: 0, direction: 90, size: 100, visible: true,
     costumes: [...DEFAULT_COSTUMES], currentCostumeIndex: 0,
     sayText: '', thinkText: '', penDown: false, penColor: '#4C97FF', penSize: 2, colorEffect: 0,
-    draggable: false, flipX: false, flipY: false,
+    draggable: false, flipX: false, flipY: false, rotationStyle: 'all-around',
   };
 }
 
