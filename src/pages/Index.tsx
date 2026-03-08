@@ -73,6 +73,7 @@ export default function Index() {
   const [shareName, setShareName] = useState('My Project');
   const [shareAuthor, setShareAuthor] = useState('');
   const [sharedProjectId, setSharedProjectId] = useState<string | null>(null);
+  const [remixOf, setRemixOf] = useState<{ id: string; name: string } | undefined>(undefined);
   const [extensions, setExtensions] = useState<ExtState>({ iframe: false, fetch: false, ai: false });
   const [customBgs, setCustomBgs] = useState<string[]>(getSavedBackgrounds());
   const fileInputRef = useRef<HTMLInputElement>(null);
