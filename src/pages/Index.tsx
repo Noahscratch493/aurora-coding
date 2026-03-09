@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import * as Blockly from 'blockly';
 import { javascriptGenerator } from 'blockly/javascript';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faWandMagicSparkles, faCubes, faPalette, faImage, faHouse, faEye, faTrash, faUpload } from '@fortawesome/free-solid-svg-icons';
+import { faWandMagicSparkles, faCubes, faPalette, faImage, faHouse, faEye, faTrash, faUpload, faCompress } from '@fortawesome/free-solid-svg-icons';
 import BlocklyEditor from '@/components/aurora/BlocklyEditor';
 import StageCanvas from '@/components/aurora/StageCanvas';
 import SpritePanel from '@/components/aurora/SpritePanel';
@@ -481,6 +481,27 @@ export default function Index() {
             <button onClick={() => setShowAbout(false)}
               className="px-4 py-1.5 rounded-md text-xs font-medium bg-primary text-primary-foreground hover:opacity-90 transition-colors">Close</button>
           </div>
+        </div>
+      )}
+
+      {/* Fullscreen overlay */}
+      {isFullscreen && (
+        <div className="fixed inset-0 z-[100] bg-background flex flex-col items-center justify-center">
+          <div className="w-full max-w-[960px]">
+            <Toolbar isRunning={isRunning} onRun={handleRun} onStop={handleStop} onReset={handleReset}
+              spriteX={currentSprite.x} spriteY={currentSprite.y} spriteDirection={currentSprite.direction}
+              showCoords={false} />
+            <div className="relative" onMouseUp={handleMouseUp}>
+              <StageCanvas sprites={runtime.sprites} penLines={runtime.penLines} stageBackground={runtime.stageBackground}
+                renderKey={renderKey} onMouseMove={(x, y) => runtime.handleMouseMove(x, y)}
+                onMouseDown={handleMouseDown} onMouseUp={handleMouseUp} />
+            </div>
+          </div>
+          <button onClick={() => setIsFullscreen(false)}
+            className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-muted text-muted-foreground hover:text-foreground transition-colors">
+            <FontAwesomeIcon icon={faCompress} className="w-3.5 h-3.5" />
+            Exit Fullscreen
+          </button>
         </div>
       )}
     </div>
