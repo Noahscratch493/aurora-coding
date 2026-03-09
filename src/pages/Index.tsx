@@ -345,7 +345,8 @@ export default function Index() {
         {/* Right panel */}
         <div className="w-[480px] flex flex-col border-l border-border bg-card">
           <Toolbar isRunning={isRunning} onRun={handleRun} onStop={handleStop} onReset={handleReset}
-            spriteX={currentSprite.x} spriteY={currentSprite.y} spriteDirection={currentSprite.direction} />
+            spriteX={currentSprite.x} spriteY={currentSprite.y} spriteDirection={currentSprite.direction}
+            onFullscreen={handleFullscreen} />
 
           <div className="flex border-b border-border px-2">
             {(['stage', 'costumes', 'backgrounds'] as const).map(tab => (
