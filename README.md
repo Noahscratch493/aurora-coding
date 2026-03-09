@@ -1,73 +1,59 @@
-# Welcome to your Lovable project
+# Aurora
 
-## Project info
+Aurora is a visual, block-based coding environment designed to make programming fun, intuitive, and accessible—perfect for beginners, hobbyists, and educators. Inspired by platforms like Scratch, Aurora lets you create interactive projects, animations, games, and more using drag-and-drop blocks.  
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+🔗 **Try Aurora online:** [https://aurora-coding.lovable.app](https://aurora-coding.lovable.app)  
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## Features
 
-**Use Lovable**
+- **Block-Based Programming:** Drag, drop, and connect blocks for motion, looks, control, events, sensing, and operators.  
+- **Interactive Sprites:** Move, rotate, and animate characters with simple commands.  
+- **Events & Control:** Use events like “when flag clicked” or “when key pressed” and control structures like loops and conditionals.  
+- **Custom Extensions:** Expand functionality with custom blocks and extensions.  
+- **Real-Time Feedback:** See the results of your code immediately with live sprite interactions.  
+- **Beginner-Friendly:** No prior coding experience required.  
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## Getting Started
 
-**Use your preferred IDE**
+1. Open Aurora in your web browser: [https://aurora-coding.lovable.app](https://aurora-coding.lovable.app)  
+2. Create a new project or open an existing one.  
+3. Drag blocks from the toolbox onto the workspace.  
+4. Connect blocks to define your program.  
+5. Click the green flag (🚩) to run your project.  
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## Core Blocks
 
-Follow these steps:
+Aurora includes blocks in several categories:
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+- **Motion:** Move, turn, glide, set x/y, bounce on edge.  
+- **Looks:** Say, think, show/hide, switch costumes, effects, size.  
+- **Events:** When flag clicked, when key pressed, broadcast messages.  
+- **Control:** Wait, repeat, forever, if/else.  
+- **Operators & Sensing:** Arithmetic, logic, comparison, sensing values.  
+- **Extensions:** Additional tools for advanced interactions.  
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+---
 
-# Step 3: Install the necessary dependencies.
-npm i
+## Contributing
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+Aurora is open for community contributions!  
 
-**Edit a file directly in GitHub**
+- Report bugs or suggest features via the project repository.  
+- Submit pull requests for new blocks, improvements, or bug fixes.  
+- Follow the code style and naming conventions used in `aurora-blocks.ts`.  
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+---
 
-**Use GitHub Codespaces**
+## License
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Aurora is released under the MIT License. See [LICENSE](LICENSE) for details.  
 
-## What technologies are used for this project?
+---
 
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Enjoy building interactive projects with Aurora! 🚀  
