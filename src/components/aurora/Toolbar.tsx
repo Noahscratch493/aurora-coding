@@ -6,12 +6,14 @@ interface ToolbarProps {
   onRun: () => void;
   onStop: () => void;
   onReset: () => void;
-  spriteX: number;
-  spriteY: number;
-  spriteDirection: number;
+  spriteX?: number;
+  spriteY?: number;
+  spriteDirection?: number;
+  showCoords?: boolean;
+  onFullscreen?: () => void;
 }
 
-export default function Toolbar({ isRunning, onRun, onStop, onReset, spriteX, spriteY, spriteDirection }: ToolbarProps) {
+export default function Toolbar({ isRunning, onRun, onStop, onReset, spriteX = 0, spriteY = 0, spriteDirection = 90, showCoords = true, onFullscreen }: ToolbarProps) {
   return (
     <div className="flex items-center justify-between px-4 py-2 bg-card border-b border-border">
       <div className="flex items-center gap-2">
@@ -41,10 +43,21 @@ export default function Toolbar({ isRunning, onRun, onStop, onReset, spriteX, sp
       </div>
 
       <div className="flex items-center gap-4 text-xs font-mono text-muted-foreground">
-        <span>x: <span className="text-foreground">{Math.round(spriteX)}</span></span>
-        <span>y: <span className="text-foreground">{Math.round(spriteY)}</span></span>
-        <span>dir: <span className="text-foreground">{Math.round(spriteDirection)}°</span></span>
-        <FontAwesomeIcon icon={faExpand} className="w-3.5 h-3.5 cursor-pointer hover:text-foreground transition-colors" />
+        {showCoords && (
+          <>
+            <span>x: <span className="text-foreground">{Math.round(spriteX)}</span></span>
+            <span>y: <span className="text-foreground">{Math.round(spriteY)}</span></span>
+            <span>dir: <span className="text-foreground">{Math.round(spriteDirection)}°</span></span>
+          </>
+        )}
+        {onFullscreen && (
+          <FontAwesomeIcon
+            icon={faExpand}
+            className="w-3.5 h-3.5 cursor-pointer hover:text-foreground transition-colors"
+            onClick={onFullscreen}
+            title="Fullscreen"
+          />
+        )}
       </div>
     </div>
   );
