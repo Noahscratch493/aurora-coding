@@ -78,10 +78,12 @@ export default function Index() {
   const [shareAuthor, setShareAuthor] = useState('');
   const [sharedProjectId, setSharedProjectId] = useState<string | null>(null);
   const [remixOf, setRemixOf] = useState<{ id: string; name: string } | undefined>(undefined);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   
   const [customBgs, setCustomBgs] = useState<string[]>(getSavedBackgrounds());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bgInputRef = useRef<HTMLInputElement>(null);
+  const fullscreenRef = useRef<HTMLDivElement>(null);
 
   if (!runtimeRef.current) {
     runtimeRef.current = new AuroraRuntime(() => setRenderKey(n => n + 1));
