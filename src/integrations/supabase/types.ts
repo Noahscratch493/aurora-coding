@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          id: string
+          username: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          id: string
+          username?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          username?: string
+        }
+        Relationships: []
+      }
       shared_projects: {
         Row: {
           author: string
@@ -24,6 +45,7 @@ export type Database = {
           remix_of_id: string | null
           remix_of_name: string | null
           thumbnail: string
+          user_id: string | null
         }
         Insert: {
           author?: string
@@ -34,6 +56,7 @@ export type Database = {
           remix_of_id?: string | null
           remix_of_name?: string | null
           thumbnail?: string
+          user_id?: string | null
         }
         Update: {
           author?: string
@@ -44,6 +67,7 @@ export type Database = {
           remix_of_id?: string | null
           remix_of_name?: string | null
           thumbnail?: string
+          user_id?: string | null
         }
         Relationships: []
       }

@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import * as Blockly from 'blockly';
 import { javascriptGenerator } from 'blockly/javascript';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -49,17 +50,19 @@ async function fetchSharedProject(id: string): Promise<SharedProject | null> {
   };
 }
 
-async function saveSharedProject(project: SharedProject) {
+async function saveSharedProject(project: SharedProject & { user_id?: string }) {
   await supabase.from('shared_projects').upsert({
     id: project.id, name: project.name, author: project.author,
     thumbnail: project.thumbnail, data: project.data,
     remix_of_id: project.remixOf?.id || null, remix_of_name: project.remixOf?.name || null,
+    user_id: project.user_id || null,
   });
 }
 
 
 export default function Index() {
   const navigate = useNavigate();
+  const { user, username: authUsername } = useAuth();
   const [searchParams] = useSearchParams();
   const [renderKey, setRenderKey] = useState(0);
   const runtimeRef = useRef<AuroraRuntime | null>(null);
@@ -251,6 +254,10 @@ export default function Index() {
   }, []);
 
   const handleShare = useCallback(async () => {
+    if (!user) {
+      alert('Please sign in to share projects.');
+      return;
+    }
     let workspaceXml = '';
     if (workspaceRef.current) {
       const dom = Blockly.Xml.workspaceToDom(workspaceRef.current);
@@ -259,15 +266,17 @@ export default function Index() {
     const data = runtime.toAurFile(workspaceXml);
     const id = sharedProjectId || `proj_${Date.now()}`;
     const thumbnail = getCanvasThumbnail();
-    const project: SharedProject = {
-      id, name: shareName || 'Untitled', author: shareAuthor || 'Anonymous',
+    const author = shareAuthor || authUsername || 'Anonymous';
+    const project = {
+      id, name: shareName || 'Untitled', author,
       thumbnail, data, createdAt: Date.now(), remixOf,
+      user_id: user.id,
     };
     await saveSharedProject(project);
     setSharedProjectId(id);
     setShowShare(false);
     alert('Project shared! You can find it on the homepage.');
-  }, [runtime, shareName, shareAuthor, sharedProjectId, getCanvasThumbnail, remixOf]);
+  }, [runtime, shareName, shareAuthor, sharedProjectId, getCanvasThumbnail, remixOf, user, authUsername]);
 
   const handleMouseDown = useCallback((x: number, y: number) => {
     runtime.handleMouseDown(x, y);
