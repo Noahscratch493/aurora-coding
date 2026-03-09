@@ -288,6 +288,19 @@ export default function Index() {
     runtime.handleMouseUp();
   }, [runtime]);
 
+  const handleFullscreen = useCallback(() => {
+    setIsFullscreen(fs => !fs);
+  }, []);
+
+  // Listen for Escape to exit fullscreen
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsFullscreen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden">
       {/* Header */}
