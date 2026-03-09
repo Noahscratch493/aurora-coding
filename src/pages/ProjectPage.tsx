@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faWandMagicSparkles, faPlay, faStop, faArrowLeft, faCode } from '@fortawesome/free-solid-svg-icons';
+import { faWandMagicSparkles, faArrowLeft, faCode } from '@fortawesome/free-solid-svg-icons';
 import * as Blockly from 'blockly';
 import { javascriptGenerator } from 'blockly/javascript';
 import StageCanvas from '@/components/aurora/StageCanvas';
-import { AuroraRuntime, SpriteState } from '@/lib/aurora-runtime';
+import Toolbar from '@/components/aurora/Toolbar';
+import { AuroraRuntime, SpriteState, createDefaultSprite } from '@/lib/aurora-runtime';
 import { supabase } from '@/integrations/supabase/client';
 import '@/lib/aurora-blocks';
 
@@ -90,6 +91,15 @@ export default function ProjectPage() {
     setIsRunning(false);
   }, [runtime]);
 
+  const handleReset = useCallback(() => {
+    runtime.stopAll();
+    setIsRunning(false);
+    if (project?.data) {
+      runtime.loadAurFile(project.data);
+      setRenderKey(n => n + 1);
+    }
+  }, [runtime, project]);
+
   const handleMouseDown = useCallback((x: number, y: number) => {
     runtime.handleMouseDown(x, y);
   }, [runtime]);
@@ -159,6 +169,7 @@ export default function ProjectPage() {
         </div>
 
         <div className="rounded-xl border border-border overflow-hidden bg-card" onMouseUp={handleMouseUp}>
+          <Toolbar isRunning={isRunning} onRun={handleRun} onStop={handleStop} onReset={handleReset} showCoords={false} />
           <div className="p-4 flex justify-center">
             <div className="relative" tabIndex={0}>
               <StageCanvas
@@ -171,17 +182,6 @@ export default function ProjectPage() {
                 onMouseUp={handleMouseUp}
               />
             </div>
-          </div>
-          <div className="flex items-center justify-center gap-3 px-4 pb-4">
-            <button onClick={isRunning ? handleStop : handleRun}
-              className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
-                isRunning
-                  ? 'bg-destructive text-destructive-foreground'
-                  : 'bg-accent text-accent-foreground'
-              }`}>
-              <FontAwesomeIcon icon={isRunning ? faStop : faPlay} className="w-3.5 h-3.5" />
-              {isRunning ? 'Stop' : 'Run'}
-            </button>
           </div>
         </div>
       </div>

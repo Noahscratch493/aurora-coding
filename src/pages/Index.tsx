@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import * as Blockly from 'blockly';
 import { javascriptGenerator } from 'blockly/javascript';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faWandMagicSparkles, faCubes, faPalette, faImage, faHouse, faEye, faTrash, faUpload } from '@fortawesome/free-solid-svg-icons';
+import { faWandMagicSparkles, faCubes, faPalette, faImage, faHouse, faEye, faTrash, faUpload, faCompress } from '@fortawesome/free-solid-svg-icons';
 import BlocklyEditor from '@/components/aurora/BlocklyEditor';
 import StageCanvas from '@/components/aurora/StageCanvas';
 import SpritePanel from '@/components/aurora/SpritePanel';
@@ -78,10 +78,12 @@ export default function Index() {
   const [shareAuthor, setShareAuthor] = useState('');
   const [sharedProjectId, setSharedProjectId] = useState<string | null>(null);
   const [remixOf, setRemixOf] = useState<{ id: string; name: string } | undefined>(undefined);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   
   const [customBgs, setCustomBgs] = useState<string[]>(getSavedBackgrounds());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bgInputRef = useRef<HTMLInputElement>(null);
+  const fullscreenRef = useRef<HTMLDivElement>(null);
 
   if (!runtimeRef.current) {
     runtimeRef.current = new AuroraRuntime(() => setRenderKey(n => n + 1));
@@ -286,6 +288,19 @@ export default function Index() {
     runtime.handleMouseUp();
   }, [runtime]);
 
+  const handleFullscreen = useCallback(() => {
+    setIsFullscreen(fs => !fs);
+  }, []);
+
+  // Listen for Escape to exit fullscreen
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsFullscreen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden">
       {/* Header */}
@@ -330,7 +345,8 @@ export default function Index() {
         {/* Right panel */}
         <div className="w-[480px] flex flex-col border-l border-border bg-card">
           <Toolbar isRunning={isRunning} onRun={handleRun} onStop={handleStop} onReset={handleReset}
-            spriteX={currentSprite.x} spriteY={currentSprite.y} spriteDirection={currentSprite.direction} />
+            spriteX={currentSprite.x} spriteY={currentSprite.y} spriteDirection={currentSprite.direction}
+            onFullscreen={handleFullscreen} />
 
           <div className="flex border-b border-border px-2">
             {(['stage', 'costumes', 'backgrounds'] as const).map(tab => (
@@ -465,6 +481,27 @@ export default function Index() {
             <button onClick={() => setShowAbout(false)}
               className="px-4 py-1.5 rounded-md text-xs font-medium bg-primary text-primary-foreground hover:opacity-90 transition-colors">Close</button>
           </div>
+        </div>
+      )}
+
+      {/* Fullscreen overlay */}
+      {isFullscreen && (
+        <div className="fixed inset-0 z-[100] bg-background flex flex-col items-center justify-center">
+          <div className="w-full max-w-[960px]">
+            <Toolbar isRunning={isRunning} onRun={handleRun} onStop={handleStop} onReset={handleReset}
+              spriteX={currentSprite.x} spriteY={currentSprite.y} spriteDirection={currentSprite.direction}
+              showCoords={false} />
+            <div className="relative" onMouseUp={handleMouseUp}>
+              <StageCanvas sprites={runtime.sprites} penLines={runtime.penLines} stageBackground={runtime.stageBackground}
+                renderKey={renderKey} onMouseMove={(x, y) => runtime.handleMouseMove(x, y)}
+                onMouseDown={handleMouseDown} onMouseUp={handleMouseUp} />
+            </div>
+          </div>
+          <button onClick={() => setIsFullscreen(false)}
+            className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-muted text-muted-foreground hover:text-foreground transition-colors">
+            <FontAwesomeIcon icon={faCompress} className="w-3.5 h-3.5" />
+            Exit Fullscreen
+          </button>
         </div>
       )}
     </div>
