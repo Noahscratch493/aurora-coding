@@ -39,17 +39,6 @@ Aurora includes blocks in several categories:
 - **Extensions:** Additional tools for advanced interactions.  
 
 ---
-
-## Contributing
-
-Aurora is open for community contributions!  
-
-- Report bugs or suggest features via the project repository.  
-- Submit pull requests for new blocks, improvements, or bug fixes.  
-- Follow the code style and naming conventions used in `aurora-blocks.ts`.  
-
----
-
 ## License
 
 Aurora is released under the MIT License. See [LICENSE](LICENSE) for details.  
